@@ -7,11 +7,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import static android.content.ContentValues.TAG;
 import static ru.ilushling.screenfilter.R.id.DimmerColor_status;
 import static ru.ilushling.screenfilter.R.id.Dimmer_status;
 
@@ -40,18 +42,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
         setContentView(R.layout.activity_main);
         // Controls
         // Color
-        dimmerColor = (SeekBar) findViewById(R.id.DimmerColor_seekbar);
-        dimmerColor_status = (TextView) findViewById(DimmerColor_status);
+        dimmerColor = findViewById(R.id.DimmerColor_seekbar);
+        dimmerColor_status = findViewById(DimmerColor_status);
         // Dimmer
-        dimmer = (SeekBar) findViewById(R.id.Dimmer_seekbar);
-        dimmer_status = (TextView) findViewById(Dimmer_status);
+        dimmer = findViewById(R.id.Dimmer_seekbar);
+        dimmer_status = findViewById(Dimmer_status);
         // Settings
         mSettings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
 
         // Service
         intent = new Intent(this, OverlayService.class);
 
-        registerReceiver(broadcastReceiver, new IntentFilter("ru.ilushling.screenfilter.br_close"));
+        registerReceiver(broadcastReceiver, new IntentFilter(OverlayService.CLOSE_ACTION));
 
 
         // DimmerColor control
@@ -101,7 +103,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         });
 
 
-        btnShow = (Button) findViewById(R.id.button);
+        btnShow = findViewById(R.id.button);
 
         btnShow.setOnClickListener(this);
     }
@@ -111,7 +113,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onStart();
         loadSettings();
 
-        // wtf
+        // CLOSE_SYSTEM_DIALOGS
         Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
         sendBroadcast(it);
     }
@@ -154,10 +156,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private void loadSettings() {
         // Load values from save
         if (mSettings.contains(APP_PREFERENCES_DimmerColor)) {
-            dimmerColor.setProgress(mSettings.getInt(APP_PREFERENCES_DimmerColor, 1));
+            dimmerColor.setProgress(mSettings.getInt(APP_PREFERENCES_DimmerColor, 0));
         }
         if (mSettings.contains(APP_PREFERENCES_Dimmer)) {
-            dimmer.setProgress(mSettings.getInt(APP_PREFERENCES_Dimmer, 1));
+            dimmer.setProgress(mSettings.getInt(APP_PREFERENCES_Dimmer, 0));
         }
     }
 
@@ -176,6 +178,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void onReceive(Context context, Intent intent) {
             switch (intent.getAction()){
                 case OverlayService.CLOSE_ACTION:
+                    Log.e(TAG, "s");
                     finish();
                     break;
             }
