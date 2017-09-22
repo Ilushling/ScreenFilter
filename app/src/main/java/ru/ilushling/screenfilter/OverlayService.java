@@ -8,9 +8,11 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.RemoteViews;
@@ -53,11 +55,13 @@ public class OverlayService extends IntentService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        dimmerColorValue = intent.getIntExtra("dimmerColorValue", 0);
-        dimmerValue = intent.getIntExtra("dimmerValue", 0);
+        if (intent != null) {
+            dimmerColorValue = intent.getIntExtra("dimmerColorValue", 0);
+            dimmerValue = intent.getIntExtra("dimmerValue", 0);
 
-        layout();
-        return Service.START_STICKY;
+            layout();
+        }
+        return Service.START_REDELIVER_INTENT;
     }
 
     void layout() {
@@ -91,15 +95,21 @@ public class OverlayService extends IntentService {
                                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
                                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
                                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |
-                                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
+                                WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION
                         ,
                         PixelFormat.TRANSLUCENT);
-                params.y = -params.height;
+
+                params.gravity = Gravity.TOP;
+                params.x = 0;
+                params.y = 0;
 
                 // Add or Update UI
                 if (wm != null) {
                     linearDimmerColor.setBackgroundColor(Color.parseColor("#" + dimmerColorValue + "FF6600"));
                     linearDimmer.setBackgroundColor(Color.parseColor("#" + dimmerValue + "000000"));
+
+                    params.height = screenHeight();
 
                     wm.updateViewLayout(linearDimmerColor, params);
                     wm.updateViewLayout(linearDimmer, params);
@@ -110,6 +120,8 @@ public class OverlayService extends IntentService {
                     linearDimmerColor.setBackgroundColor(Color.parseColor("#" + dimmerColorValue + "FF6600"));
                     linearDimmer.setBackgroundColor(Color.parseColor("#" + dimmerValue + "000000"));
 
+                    params.height = screenHeight();
+
                     wm.addView(linearDimmerColor, params);
                     wm.addView(linearDimmer, params);
                 }
@@ -117,6 +129,22 @@ public class OverlayService extends IntentService {
         } catch (Exception exce) {
             Log.e(TAG, "" + exce);
         }
+    }
+
+    // Get screen height with navigation bar height (Because MATCH_PARENT = SCREEN_SIZE - NAV_BAR)
+    int screenHeight() {
+        int screenHeight = 0;
+        // Screen size
+        Point size = new Point();
+        wm.getDefaultDisplay().getSize(size);
+        // Nav bar
+        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            // screen + nav bar
+            screenHeight = size.y + getResources().getDimensionPixelSize(resourceId);
+        }
+
+        return screenHeight;
     }
 
     @Override
