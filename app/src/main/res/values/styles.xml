@@ -1,6 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="AppTheme" parent="android:Theme.Holo.Dialog.NoActionBar">
+        <!-- Windows notification_settings -->
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:background">@android:color/transparent</item>
         <item name="android:windowBackground">@android:color/transparent</item>
@@ -11,9 +12,8 @@
         <item name="android:backgroundDimEnabled">false</item>
         <item name="android:windowTranslucentStatus" tools:targetApi="19">true</item>
         <item name="android:windowTranslucentNavigation" tools:targetApi="19">true</item>
-
+        <!-- Nav bar -->
         <item name="android:navigationBarColor" tools:targetApi = "21">@android:color/transparent</item>
-
         <item name="android:windowDrawsSystemBarBackgrounds" tools:targetApi = "21">true</item>
     </style>
 

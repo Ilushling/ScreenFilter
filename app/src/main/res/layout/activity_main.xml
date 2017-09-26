@@ -6,8 +6,8 @@
     android:id="@+id/Wrapper"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="ru.ilushling.screenfilter.MainActivity"
-    android:fitsSystemWindows="true">
+    android:fitsSystemWindows="true"
+    tools:context="ru.ilushling.screenfilter.MainActivity">
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/UIWrapper"
@@ -24,7 +24,7 @@
         tools:layout_constraintRight_creator="1">
 
         <android.support.constraint.ConstraintLayout
-            android:id="@+id/Color"
+            android:id="@+id/Top"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:layout_constraintLeft_toLeftOf="parent"
@@ -32,11 +32,79 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginBottom="0dp"
+                android:layout_marginTop="0dp"
+                android:scaleType="fitCenter"
+                android:src="@mipmap/ic_launcher"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="1.0"/>
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:fontFamily="sans-serif-light"
+                android:text="Ночной Фильтр"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/imageView"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+            <Switch
+                android:id="@+id/dimmerSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginRight="8dp"
+                android:checked="false"
+                android:showText="false"
+                android:splitTrack="false"
+                android:switchMinWidth="40dp"
+                android:thumb="@drawable/seekbar_custom_thumb"
+                android:track="@drawable/switch_track"
+                app:layout_constraintBottom_toBottomOf="@+id/imageView"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/imageView"
+                tools:checked="true"/>
+        </android.support.constraint.ConstraintLayout>
+
+        <View
+            android:id="@+id/divider_top"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:background="@color/divider"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/Top"/>
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/Color"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/divider_top">
+
+            <ImageView
                 android:id="@+id/Dimmercolor_image"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
-                android:src="@drawable/image_dimmercolor_thumb"
+                android:src="@drawable/image_dimmercolor"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -50,7 +118,7 @@
                 android:layout_weight="0.91"
                 android:max="218"
                 android:padding="10dp"
-                android:progressDrawable="@drawable/seekbar_dimmercolor_progress"
+                android:progressDrawable="@drawable/seekbar_dimmercolor_track"
                 android:thumb="@drawable/seekbar_custom_thumb"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/Dimmercolor_image"
@@ -62,11 +130,12 @@
             <TextView
                 android:id="@+id/DimmerColor_status"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
                 android:layout_gravity="center_vertical"
                 android:fontFamily="sans-serif-thin"
                 android:padding="10dp"
                 android:text="0%"
+                android:textAlignment="center"
                 android:textColor="@android:color/background_light"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -75,12 +144,14 @@
         </android.support.constraint.ConstraintLayout>
 
         <View
-            android:id="@+id/view"
+            android:id="@+id/divider_dimmer"
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
             android:background="@color/divider"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
@@ -90,17 +161,18 @@
             android:id="@+id/Dimmer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="8dp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/view">
+            app:layout_constraintTop_toBottomOf="@+id/divider_dimmer"
+            >
 
             <ImageView
                 android:id="@+id/Dimmer_image"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
-                android:src="@drawable/image_dimmer_thumb"
+                android:src="@drawable/image_dimmer"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -116,7 +188,7 @@
                 android:layout_weight="1"
                 android:max="218"
                 android:padding="10dp"
-                android:progressDrawable="@drawable/seekbar_dimmer_progress"
+                android:progressDrawable="@drawable/seekbar_dimmer_track"
                 android:thumb="@drawable/seekbar_custom_thumb"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
@@ -129,11 +201,12 @@
             <TextView
                 android:id="@+id/Dimmer_status"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
                 android:layout_gravity="center_vertical"
                 android:fontFamily="sans-serif-thin"
                 android:padding="10dp"
                 android:text="0%"
+                android:textAlignment="center"
                 android:textColor="@android:color/background_light"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -141,10 +214,102 @@
                 app:layout_constraintTop_toTopOf="parent"/>
 
         </android.support.constraint.ConstraintLayout>
+
+        <View
+            android:id="@+id/divider_timer"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:background="@color/divider"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/Dimmer"/>
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/Timer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/divider_timer">
+
+            <ImageView
+                android:id="@+id/TimeImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:src="@drawable/image_time"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+            <TextView
+                android:id="@+id/timerTimeOn"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:fontFamily="sans-serif-light"
+                android:gravity="center"
+                android:text="ON 22:00"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/TimeImage"
+                app:layout_constraintRight_toLeftOf="@+id/dividerTimer"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0"/>
+
+            <View
+                android:id="@+id/dividerTimer"
+                android:layout_width="1dp"
+                android:layout_height="0dp"
+                android:layout_marginBottom="16dp"
+                android:layout_marginTop="16dp"
+                android:background="@color/divider"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/timerTimeOn"
+                app:layout_constraintRight_toLeftOf="@+id/timerTimeOff"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+            <TextView
+                android:id="@+id/timerTimeOff"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:fontFamily="sans-serif-light"
+                android:gravity="center"
+                android:text="OFF 7:00"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/dividerTimer"
+                app:layout_constraintRight_toLeftOf="@+id/timerSwitch"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0"/>
+
+            <Switch
+                android:id="@+id/timerSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginRight="8dp"
+                android:checked="false"
+                android:showText="false"
+                android:splitTrack="false"
+                android:switchMinWidth="40dp"
+                android:thumb="@drawable/seekbar_custom_thumb"
+                android:track="@drawable/switch_track"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:checked="true"/>
+
+        </android.support.constraint.ConstraintLayout>
     </android.support.constraint.ConstraintLayout>
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/button_close"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_alignParentLeft="true"
@@ -154,20 +319,18 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/UIWrapper"
         tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintTop_creator="1"
-        tools:layout_constraintRight_creator="1"
         tools:layout_constraintLeft_creator="1"
-        android:layout_marginTop="0dp"
-        app:layout_constraintTop_toBottomOf="@+id/UIWrapper"/>
+        tools:layout_constraintRight_creator="1"
+        tools:layout_constraintTop_creator="1"/>
 
     <android.support.constraint.Guideline
+        android:id="@+id/guideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/guideline"
-        app:layout_constraintGuide_begin="77dp"
         android:orientation="horizontal"
-        tools:layout_editor_absoluteY="77dp"
-        tools:layout_editor_absoluteX="0dp"/>
+        app:layout_constraintGuide_begin="33dp"
+        />
 
 </android.support.constraint.ConstraintLayout>

@@ -58,7 +58,7 @@
         android:layout_alignParentTop="true"
         android:padding="10dp"
         android:scaleType="centerInside"
-        android:src="@drawable/settings"
+        android:src="@drawable/notification_settings"
         />
 
 </RelativeLayout>

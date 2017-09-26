@@ -4,9 +4,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import static ru.ilushling.screenfilter.OverlayService.ALARM_TIMER_OFF;
+import static ru.ilushling.screenfilter.OverlayService.ALARM_TIMER_ON;
+
 public class BReceiver extends BroadcastReceiver {
 
     String TAG = "BroadcastReceiver";
+
+    public static final String APP_PREFERENCES_OVERLAY = "OVERLAY";
 
     public BReceiver() {
     }
@@ -34,6 +39,36 @@ public class BReceiver extends BroadcastReceiver {
             Intent it = new Intent();
             it.setAction(OverlayService.CLOSE_ACTION);
             context.sendBroadcast(it);
+        }
+
+        // Timer
+        // ON
+        if (action == ALARM_TIMER_ON) {
+            // Service
+            Intent i = new Intent(context, OverlayService.class);
+            i.setAction("alarmTimerOn");
+            context.startService(i);
+            // Activity
+            i = new Intent();
+            i.setAction(APP_PREFERENCES_OVERLAY);
+            i.putExtra("overlayOn", true);
+            context.sendBroadcast(i);
+
+            //Log.e(TAG, "On");
+        }
+        // OFF
+        if (action == ALARM_TIMER_OFF) {
+            // Service
+            Intent i = new Intent(context, OverlayService.class);
+            i.setAction(APP_PREFERENCES_OVERLAY);
+            context.startService(i);
+            // Activity
+            i = new Intent();
+            i.setAction(APP_PREFERENCES_OVERLAY);
+            i.putExtra("overlayOn", false);
+            context.sendBroadcast(i);
+
+            //Log.e(TAG, "Off");
         }
 
     }
