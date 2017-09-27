@@ -1,13 +1,18 @@
 package ru.ilushling.screenfilter;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -44,6 +49,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private int dimmerColorValue, dimmerValue;
     boolean dimmerOn, timerOn;
     protected String timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff;
+    // Permissions
+    private static final int REQUEST_PERMISSION = 1;
 
 
     @Override
@@ -51,12 +58,20 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // UI
+        // Dimmer
+        dimmerSwitch = findViewById(R.id.dimmerSwitch);
+        dimmerColor = findViewById(R.id.DimmerColor_seekbar);
+        dimmerColor_status = findViewById(R.id.DimmerColor_status);
+        dimmer = findViewById(R.id.Dimmer_seekbar);
+        dimmer_status = findViewById(R.id.Dimmer_status);
+        // Timer
         timerTimeOn = findViewById(R.id.timerTimeOn);
         timerTimeOn.setOnClickListener(this);
         timerTimeOff = findViewById(R.id.timerTimeOff);
         timerTimeOff.setOnClickListener(this);
+        timerSwitch = findViewById(R.id.timerSwitch);
+
         // Dimmer
-        dimmerSwitch = findViewById(R.id.dimmerSwitch);
         dimmerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             @Override
@@ -73,7 +88,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         });
 
         // Timer
-        timerSwitch = findViewById(R.id.timerSwitch);
         timerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             @Override
@@ -93,12 +107,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         });
 
-        // Color
-        dimmerColor = findViewById(R.id.DimmerColor_seekbar);
-        dimmerColor_status = findViewById(R.id.DimmerColor_status);
-        // Dimmer
-        dimmer = findViewById(R.id.Dimmer_seekbar);
-        dimmer_status = findViewById(R.id.Dimmer_status);
         // Close Button
         button_close = findViewById(R.id.button_close);
         button_close.setOnClickListener(this);
@@ -162,11 +170,43 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onStart() {
         super.onStart();
 
-        loadSettings();
+        /**
+         * for Android 6 and below need to check permissions
+         * 1 check version SDK (>= M)
+         * 2 check Permission if dont have need request them (Dialog)
+         * 3 if dont work dialog run alternative via settings (Activity result)
+         */
+        if (isCheckPermissionAlternative()) {
+            permitted();
 
-        // CLOSE_SYSTEM_DIALOGS
-        Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-        sendBroadcast(it);
+            loadSettings();
+
+            // CLOSE_SYSTEM_DIALOGS
+            Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+            sendBroadcast(it);
+        } else {
+            resricted();
+        }
+    }
+
+    void permitted() {
+        dimmerSwitch.setEnabled(true);
+        dimmerColor.setEnabled(true);
+        dimmer.setEnabled(true);
+        timerSwitch.setEnabled(true);
+        timerTimeOn.setEnabled(true);
+        timerTimeOff.setEnabled(true);
+    }
+
+    void resricted() {
+        dimmerSwitch.setEnabled(false);
+        dimmerSwitch.setChecked(false);
+        dimmerColor.setEnabled(false);
+        dimmer.setEnabled(false);
+        timerSwitch.setEnabled(false);
+        timerSwitch.setChecked(false);
+        timerTimeOn.setEnabled(false);
+        timerTimeOff.setEnabled(false);
     }
 
     @Override
@@ -196,7 +236,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private void overlayService() {
         if (dimmerColorValue == 0 && dimmerValue == 0) {
             overlayOff();
-            Log.e(TAG, "OFF");
         } else if (dimmerOn && !first) {
             overlayOn();
         }
@@ -230,11 +269,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 dimmerOn = mSettings.getBoolean(APP_PREFERENCES_DIMMER_ON, false);
             } catch (Exception e) {
                 clearSetting(APP_PREFERENCES_DIMMER_ON);
-                saveSettings(APP_PREFERENCES_DIMMER_ON, true);
+                saveSettings(APP_PREFERENCES_DIMMER_ON, false);
             }
         } else {
-            saveSettings(APP_PREFERENCES_DIMMER_ON, true);
-            dimmerOn = mSettings.getBoolean(APP_PREFERENCES_DIMMER_ON, true);
+            saveSettings(APP_PREFERENCES_DIMMER_ON, false);
+            dimmerOn = mSettings.getBoolean(APP_PREFERENCES_DIMMER_ON, false);
         }
 
         // DimmerColor
@@ -333,13 +372,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         // [END Timer]
 
-        // Update UI
-        /**
-         * Switchers need after loading because they listeners triggering before load
-         */
-        dimmerSwitch.setChecked(dimmerOn);
-        timerSwitch.setChecked(timerOn);
-
         // [START format minutes to 00]
         // ON
         StringBuilder sb = new StringBuilder();
@@ -374,6 +406,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
         timerTimeOn.setText("ON " + timerHourOn + ":" + timerMinuteOn);
         timerTimeOff.setText("OFF " + timerHourOff + ":" + timerMinuteOff);
 
+
+        // Update UI
+        /**
+         * Switchers need after loading because they listeners triggering before load
+         */
+        dimmerSwitch.setChecked(dimmerOn);
+        timerSwitch.setChecked(timerOn);
         /**
          * if seekbars was changed it call overlayService there are 3 seekbars so need only once and after load
          */
@@ -498,6 +537,69 @@ public class MainActivity extends Activity implements View.OnClickListener {
             startService(intent);
         }
     }
+
+    // [START Permissions]
+    // Dialog for permission
+    private void showMessageOKCancel(String message) {
+        new AlertDialog.Builder(MainActivity.this)
+                .setMessage(message)
+                .setPositiveButton("OK", listener)
+                .setNegativeButton("Cancel", listener)
+                .create()
+                .show();
+    }
+
+    // Listener for dialog
+    DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+
+        final int BUTTON_NEGATIVE = -2;
+        final int BUTTON_POSITIVE = -1;
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch (which) {
+                case BUTTON_NEGATIVE:
+                    // int which = -2
+                    dialog.dismiss();
+                    break;
+                case BUTTON_POSITIVE:
+                    // int which = -1
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+                    startActivityForResult(intent, 1);
+                    dialog.dismiss();
+                    break;
+            }
+        }
+    };
+
+
+    private boolean isCheckPermissionAlternative() {
+        // via settings
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                showMessageOKCancel("Разрешить приложению использовать оверлей?");
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return true;
+    }
+
+    // Alternative permission
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1) {
+            // ** if so check once again if we have permission */
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (Settings.canDrawOverlays(this)) {
+                    // continue here - permission was granted
+                    Log.e(TAG, "Granted alternative");
+                }
+            }
+        }
+    }
+    // [END Permissions]
 
     // Close
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {

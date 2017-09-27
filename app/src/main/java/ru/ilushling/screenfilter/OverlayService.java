@@ -176,8 +176,9 @@ public class OverlayService extends Service {
 
                 startNotification();
             }
-        } catch (Exception exce) {
-            Log.e(TAG, "" + exce);
+        } catch (Exception exc) {
+            Log.e(TAG, "Overlay On: " + exc);
+            overlayOff();
         }
     }
 
@@ -200,18 +201,21 @@ public class OverlayService extends Service {
     void overlayOff() {
         if (linearDimmerColor != null && linearDimmer != null && wm != null) {
             try {
+                saveSettings(APP_PREFERENCES_DIMMER_ON, false);
+
                 wm.removeView(linearDimmerColor);
                 wm.removeView(linearDimmer);
 
-                wm = null;
-                linearDimmerColor = null;
-                linearDimmer = null;
 
-                stopForeground(true);
-
-                saveSettings(APP_PREFERENCES_DIMMER_ON, false);
             } catch (Exception exc) {
+                Log.e(TAG, "Overlay Off: " + exc);
             }
+
+            wm = null;
+            linearDimmerColor = null;
+            linearDimmer = null;
+
+            stopForeground(true);
         }
 
         //Log.e(TAG, "overlay Off");
