@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Ночной фильтр</string>
+    <string name="notification_description">Нажмите, чтобы отключить</string>
+</resources>

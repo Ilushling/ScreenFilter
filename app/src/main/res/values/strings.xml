@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">ScreenFilter</string>
+    <string name="app_name">Night Filter</string>
+    <string name="notification_description">Touch to disable</string>
 </resources>

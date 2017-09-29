@@ -25,6 +25,11 @@ import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_DIMMER;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_DIMMER_COLOR;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_DIMMER_ON;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_NAME;
+import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_TIMER_HOUR_OFF;
+import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_TIMER_HOUR_ON;
+import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_TIMER_MINUTE_OFF;
+import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_TIMER_MINUTE_ON;
+import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_TIMER_ON;
 
 public class OverlayService extends Service {
     // Common
@@ -35,6 +40,8 @@ public class OverlayService extends Service {
     Notification.Builder notification;
     // Variables
     int dimmerColorValue, dimmerValue;
+    boolean timerOn;
+    protected String timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff;
     // Save Settings
     SharedPreferences mSettings;
     // STATIC
@@ -84,10 +91,7 @@ public class OverlayService extends Service {
                 overlayOff();
                 break;
             case "timerOn":
-                String timerHourOn = intent.getStringExtra("timerHourOn");
-                String timerMinuteOn = intent.getStringExtra("timerMinuteOn");
-                String timerHourOff = intent.getStringExtra("timerHourOff");
-                String timerMinuteOff = intent.getStringExtra("timerMinuteOff");
+                loadSettings();
 
                 if (timerHourOn != null && timerMinuteOn != null && timerHourOff != null && timerMinuteOff != null) {
                     timerOn(timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff);
@@ -276,13 +280,17 @@ public class OverlayService extends Service {
         timeOff.set(Calendar.HOUR_OF_DAY, Integer.parseInt(timerHourOff));
         timeOff.set(Calendar.MINUTE, Integer.parseInt(timerMinuteOff));
 
-        // Check for instant trigger
-        if (timeOn.before(now)) {
-            // Timer to next day
-            timeOn.add(Calendar.DAY_OF_MONTH, 1);
 
-            // Turn on overlay if timeOff not started
-            if (!timeOff.before(now)) {
+        // if timeoff before timeon than timeoff set to next day
+        if (timeOff.before(timeOn)) {
+            // Timer to next day
+            timeOff.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+
+        // Check for turn on
+        if (timeOn.before(now)) {
+            if (timeOff.after(now)) {
                 overlayOn();
                 // UpdateUI
                 Intent i = new Intent(this, BReceiver.class);
@@ -290,32 +298,39 @@ public class OverlayService extends Service {
                 sendBroadcast(i);
             }
         }
-        // Turn on overlay if timeOff after now
-        if (timeOff.after(now)) {
-            overlayOn();
-            // UpdateUI
-            Intent i = new Intent(this, BReceiver.class);
-            i.setAction(ALARM_TIMER_ON);
-            sendBroadcast(i);
-        }
 
-        // Turn off if timeOff started
-        if (timeOff.before(now)) {
+        // Check for instant trigger
+        // time on
+        if (timeOn.before(now)) {
             // Timer to next day
-            timeOff.add(Calendar.DAY_OF_MONTH, 1);
-            // Turn off overlay
-            overlayOff();
-            // UpdateUI
-            Intent i = new Intent(this, BReceiver.class);
-            i.setAction(ALARM_TIMER_OFF);
-            sendBroadcast(i);
+            timeOn.add(Calendar.DAY_OF_MONTH, 1);
+
+            // Turn off if timeOff started
+            if (timeOn.after(now) && timeOff.before(now)) {
+                // Turn off overlay
+                overlayOff();
+                // UpdateUI
+                Intent i = new Intent(this, BReceiver.class);
+                i.setAction(ALARM_TIMER_OFF);
+                sendBroadcast(i);
+            }
+        } else {
+            // Turn off if timeOff started
+            if (timeOn.after(now) && timeOff.after(now)) {
+                // Turn off overlay
+                overlayOff();
+                // UpdateUI
+                Intent i = new Intent(this, BReceiver.class);
+                i.setAction(ALARM_TIMER_OFF);
+                sendBroadcast(i);
+            }
         }
 
         // Start timer
         am.setRepeating(AlarmManager.RTC, timeOn.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOn);
         am.setRepeating(AlarmManager.RTC, timeOff.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOff);
 
-        //Log.e(TAG, "timer On2: " + timeOn);
+        //Log.e(TAG, "timer On");
     }
 
 
@@ -336,6 +351,24 @@ public class OverlayService extends Service {
         // Dimmer
         if (mSettings.contains(APP_PREFERENCES_DIMMER)) {
             dimmerValue = mSettings.getInt(APP_PREFERENCES_DIMMER, 0);
+        }
+
+        // Switch
+        if (mSettings.contains(APP_PREFERENCES_TIMER_ON)) {
+            timerOn = mSettings.getBoolean(APP_PREFERENCES_TIMER_ON, false);
+        }
+        // Values
+        if (mSettings.contains(APP_PREFERENCES_TIMER_HOUR_ON)) {
+            timerHourOn = mSettings.getString(APP_PREFERENCES_TIMER_HOUR_ON, "22");
+        }
+        if (mSettings.contains(APP_PREFERENCES_TIMER_MINUTE_ON)) {
+            timerMinuteOn = mSettings.getString(APP_PREFERENCES_TIMER_MINUTE_ON, "0");
+        }
+        if (mSettings.contains(APP_PREFERENCES_TIMER_HOUR_OFF)) {
+            timerHourOff = mSettings.getString(APP_PREFERENCES_TIMER_HOUR_OFF, "7");
+        }
+        if (mSettings.contains(APP_PREFERENCES_TIMER_MINUTE_OFF)) {
+            timerMinuteOff = mSettings.getString(APP_PREFERENCES_TIMER_MINUTE_OFF, "0");
         }
     }
 

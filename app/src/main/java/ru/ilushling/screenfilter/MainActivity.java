@@ -49,8 +49,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private int dimmerColorValue, dimmerValue;
     boolean dimmerOn, timerOn;
     protected String timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff;
-    // Permissions
-    private static final int REQUEST_PERMISSION = 1;
 
 
     @Override
