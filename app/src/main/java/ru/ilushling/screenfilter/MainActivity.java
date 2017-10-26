@@ -409,8 +409,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         /**
          * Switchers need after loading because they listeners triggering before load
          */
+        // Switcher
         dimmerSwitch.setChecked(dimmerOn);
+        // Timer
         timerSwitch.setChecked(timerOn);
+        timerTimeOn.setEnabled(timerOn);
+        timerTimeOff.setEnabled(timerOn);
         /**
          * if seekbars was changed it call overlayService there are 3 seekbars so need only once and after load
          */

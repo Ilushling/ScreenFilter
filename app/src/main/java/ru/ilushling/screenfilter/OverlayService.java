@@ -51,12 +51,6 @@ public class OverlayService extends Service {
     Intent intentTimerOn, intentTimerOff;
     PendingIntent pIntentTimerOn, pIntentTimerOff;
 
-    Intent createIntent(String action) {
-        Intent intent = new Intent(this, BReceiver.class);
-        intent.setAction(action);
-        return intent;
-    }
-
     @Override
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("Not yet implemented");
@@ -76,6 +70,12 @@ public class OverlayService extends Service {
         pIntentTimerOff = PendingIntent.getBroadcast(this, 0, intentTimerOff, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
+    Intent createIntent(String action) {
+        Intent intent = new Intent(this, BReceiver.class);
+        intent.setAction(action);
+        return intent;
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent.getAction();
@@ -93,7 +93,7 @@ public class OverlayService extends Service {
             case "timerOn":
                 loadSettings();
 
-                if (timerHourOn != null && timerMinuteOn != null && timerHourOff != null && timerMinuteOff != null) {
+                if (timerOn && timerHourOn != null && timerMinuteOn != null && timerHourOff != null && timerMinuteOff != null) {
                     timerOn(timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff);
                 }
                 break;
@@ -330,7 +330,7 @@ public class OverlayService extends Service {
         am.setRepeating(AlarmManager.RTC, timeOn.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOn);
         am.setRepeating(AlarmManager.RTC, timeOff.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOff);
 
-        //Log.e(TAG, "timer On");
+        Log.e(TAG, "timer On");
     }
 
 
@@ -338,8 +338,13 @@ public class OverlayService extends Service {
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
         am.cancel(pIntentTimerOn);
         am.cancel(pIntentTimerOff);
+        pIntentTimerOn.cancel();
+        pIntentTimerOff.cancel();
 
-        //Log.e(TAG, "timer Off");
+        boolean isWorking = (PendingIntent.getBroadcast(this, 0, createIntent(ALARM_TIMER_ON), PendingIntent.FLAG_NO_CREATE) != null);//just changed the flag
+        Log.e(TAG, "alarm is " + (isWorking ? "" : "not ") + "working...");
+
+        Log.e(TAG, "timer Off");
     }
 
     private void loadSettings() {

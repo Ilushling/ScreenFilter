@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 // Create a variable called keystorePropertiesFile, and initialize it to your
 // keystore.properties file, in the rootProject folder.
-def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystorePropertiesFile = rootProject.file("../../keys/keystore_screenfilter.properties")
 
 // Initialize a new Properties() object called keystoreProperties.
 def keystoreProperties = new Properties()
@@ -20,13 +20,13 @@ android {
         }
     }
     compileSdkVersion 26
-    buildToolsVersion '25.0.2'
+    buildToolsVersion '26.0.2'
 
     defaultConfig {
         applicationId "ru.ilushling.screenfilter"
         minSdkVersion 14
         targetSdkVersion 26
-        versionCode 17
+        versionCode 18
         versionName "1.0"
     }
     buildTypes {
@@ -40,6 +40,6 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:26.0.0-alpha1'
+    compile 'com.android.support:appcompat-v7:26.1.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
 }
