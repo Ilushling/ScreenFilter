@@ -3,6 +3,7 @@ package ru.ilushling.screenfilter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import static ru.ilushling.screenfilter.OverlayService.ALARM_TIMER_OFF;
 import static ru.ilushling.screenfilter.OverlayService.ALARM_TIMER_ON;
@@ -65,10 +66,10 @@ public class BReceiver extends BroadcastReceiver {
             // Activity
             i = new Intent();
             i.setAction(APP_PREFERENCES_OVERLAY);
-            i.putExtra("overlayOn", false);
+            i.putExtra("overlayOff", false);
             context.sendBroadcast(i);
 
-            //Log.e(TAG, "Off");
+            Log.e(TAG, "Off");
         }
 
         // Check alarm timer after reboot
