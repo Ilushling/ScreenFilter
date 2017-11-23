@@ -12,7 +12,8 @@ public class BReceiver extends BroadcastReceiver {
 
     String TAG = "BroadcastReceiver";
 
-    public static final String APP_PREFERENCES_OVERLAY = "OVERLAY";
+    public static final String APP_OVERLAY_ON = "ru.ilushling.screenfilter.OVERLAY_ON";
+    public static final String APP_OVERLAY_OFF = "ru.ilushling.screenfilter.OVERLAY_OFF";
 
     public BReceiver() {
     }
@@ -51,22 +52,20 @@ public class BReceiver extends BroadcastReceiver {
             context.startService(i);
             // Activity
             i = new Intent();
-            i.setAction(APP_PREFERENCES_OVERLAY);
-            i.putExtra("overlayOn", true);
+            i.setAction(APP_OVERLAY_ON);
             context.sendBroadcast(i);
 
-            //Log.e(TAG, "On");
+            Log.e(TAG, "On");
         }
         // OFF
         if (action == ALARM_TIMER_OFF) {
             // Service
             Intent i = new Intent(context, OverlayService.class);
-            i.setAction(APP_PREFERENCES_OVERLAY);
+            i.setAction("alarmTimerOff");
             context.startService(i);
             // Activity
             i = new Intent();
-            i.setAction(APP_PREFERENCES_OVERLAY);
-            i.putExtra("overlayOff", false);
+            i.setAction(APP_OVERLAY_OFF);
             context.sendBroadcast(i);
 
             Log.e(TAG, "Off");

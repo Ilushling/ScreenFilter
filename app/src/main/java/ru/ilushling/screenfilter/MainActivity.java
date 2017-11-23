@@ -113,7 +113,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mSettings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
 
         // Receiver
-        IntentFilter filter = new IntentFilter(BReceiver.APP_PREFERENCES_OVERLAY);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BReceiver.APP_OVERLAY_ON);
+        filter.addAction(BReceiver.APP_OVERLAY_OFF);
         filter.addAction(OverlayService.CLOSE_ACTION);
         registerReceiver(broadcastReceiver, filter);
 
@@ -211,7 +213,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onResume() {
         super.onResume();
 
-        IntentFilter filter = new IntentFilter(BReceiver.APP_PREFERENCES_OVERLAY);
+        IntentFilter filter = new IntentFilter();
         filter.addAction(OverlayService.CLOSE_ACTION);
         registerReceiver(broadcastReceiver, filter);
     }
@@ -610,14 +612,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
             //Log.e(TAG, intent.getAction());
 
             switch (intent.getAction()) {
-                case BReceiver.APP_PREFERENCES_OVERLAY:
-                    dimmerOn = intent.getBooleanExtra("overlayOn", false);
-
-                    if (dimmerOn) {
+                case BReceiver.APP_OVERLAY_ON:
                         dimmerSwitch.setChecked(true);
-                    } else {
+                    break;
+                case BReceiver.APP_OVERLAY_OFF:
                         dimmerSwitch.setChecked(false);
-                    }
                     break;
                 case OverlayService.CLOSE_ACTION:
                     finish();
