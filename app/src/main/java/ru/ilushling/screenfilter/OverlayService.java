@@ -2,6 +2,7 @@ package ru.ilushling.screenfilter;
 
 import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -47,6 +48,7 @@ public class OverlayService extends Service {
     // STATIC
     public static final String OPEN_ACTION = "ru.ilushling.screenfilter.OPEN_ACTION", CLOSE_ACTION = "ru.ilushling.screenfilter.CLOSE_ACTION",
             ALARM_TIMER_ON = "ru.ilushling.screenfilter.alarmTimerOn", ALARM_TIMER_OFF = "ru.ilushling.screenfilter.alarmTimerOff";
+    public static final String NOTIFICATION_CHANNEL_ID = "9954", NOTIFICATION_CHANNEL_NAME = "screenfilter";
 
     Intent intentTimerOn, intentTimerOff;
     PendingIntent pIntentTimerOn, pIntentTimerOff;
@@ -137,18 +139,35 @@ public class OverlayService extends Service {
 
                 // Prepare UI
                 // UI Params
-                WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                        WindowManager.LayoutParams.MATCH_PARENT,
-                        WindowManager.LayoutParams.MATCH_PARENT,
-                        WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-                        WindowManager.LayoutParams.FLAG_FULLSCREEN |
-                                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
-                                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
-                                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |
-                                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
-                                WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION
-                        ,
-                        PixelFormat.TRANSLUCENT);
+                WindowManager.LayoutParams params;
+                if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    params = new WindowManager.LayoutParams(
+                            WindowManager.LayoutParams.MATCH_PARENT,
+                            WindowManager.LayoutParams.MATCH_PARENT,
+                            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                            WindowManager.LayoutParams.FLAG_FULLSCREEN |
+                                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                                    WindowManager.LayoutParams.TYPE_TOAST |
+                                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |
+                                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
+                                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION
+                            ,
+                            PixelFormat.TRANSLUCENT);
+                } else {
+                    params = new WindowManager.LayoutParams(
+                            WindowManager.LayoutParams.MATCH_PARENT,
+                            WindowManager.LayoutParams.MATCH_PARENT,
+                            WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                            WindowManager.LayoutParams.FLAG_FULLSCREEN |
+                                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |
+                                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
+                                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION
+                            ,
+                            PixelFormat.TRANSLUCENT);
+                }
 
                 params.gravity = Gravity.TOP;
                 params.x = 0;
@@ -251,17 +270,32 @@ public class OverlayService extends Service {
             PendingIntent pendingIntentClose = PendingIntent.getBroadcast(this, 0, notificationIntentClose, PendingIntent.FLAG_UPDATE_CURRENT);
 
             // Build notification
-            notification = new Notification.Builder(this)
-                    .setContentTitle("Ночной фильтр")
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentIntent(pendingIntentClose)
-                    .setContent(customView)
-                    //.addAction(R., "Настроить", pendingIntentOpen)
-                    //.addAction(R.mipmap.ic_launcher, "Выход", pendingIntentClose)
-                    .setAutoCancel(true);
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                if (mNotificationManager != null) {
+                    int importance = NotificationManager.IMPORTANCE_HIGH;
+                    NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, importance);
+                    mNotificationManager.createNotificationChannel(notificationChannel);
+                }
+                notification = new Notification.Builder(this)
+                        .setContentTitle("Ночной фильтр")
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setChannelId(NOTIFICATION_CHANNEL_ID)
+                        .setContentIntent(pendingIntentClose)
+                        .setContent(customView)
+                        .setAutoCancel(true)
+                        .setChannelId("9954");
+
+            } else {
+                notification = new Notification.Builder(this)
+                        .setContentTitle("Ночной фильтр")
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setContentIntent(pendingIntentClose)
+                        .setContent(customView)
+                        .setAutoCancel(true);
+            }
             // Listeners
             customView.setOnClickPendingIntent(R.id.open_settings, pendingIntentOpen);
-            //customView.setOnClickPendingIntent(R.id.close, pendingIntentClose);
 
             mNotificationManager.notify(9954, notification.build());
             startForeground(9954, notification.build());
