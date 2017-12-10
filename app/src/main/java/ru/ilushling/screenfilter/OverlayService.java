@@ -175,6 +175,7 @@ public class OverlayService extends Service {
 
                 // Add or Update UI
                 if (wm != null && linearDimmerColor != null && linearDimmer != null) {
+                    // Update
                     linearDimmerColor.setBackgroundColor(Color.parseColor("#" + dimmerColorValue + "FF6600"));
                     linearDimmer.setBackgroundColor(Color.parseColor("#" + dimmerValue + "000000"));
 
@@ -183,6 +184,8 @@ public class OverlayService extends Service {
                     wm.updateViewLayout(linearDimmerColor, params);
                     wm.updateViewLayout(linearDimmer, params);
                 } else {
+                    // Add
+                    startNotification();
                     wm = (WindowManager) getSystemService(WINDOW_SERVICE);
                     linearDimmerColor = new LinearLayout(this);
                     linearDimmer = new LinearLayout(this);
@@ -197,7 +200,6 @@ public class OverlayService extends Service {
 
                 saveSettings(APP_PREFERENCES_DIMMER_ON, true);
 
-                startNotification();
             }
         } catch (Exception exc) {
             Log.e(TAG, "Overlay On: " + exc);
