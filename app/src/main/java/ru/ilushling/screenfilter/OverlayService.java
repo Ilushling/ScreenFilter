@@ -324,19 +324,22 @@ public class OverlayService extends Service {
             if (timeOn.after(timeOff)) {
                 timeOff.add(Calendar.DAY_OF_MONTH, 1);
             }
-
-            if ((timeOn.before(now) && timeOn.before(timeOff)) && timeOff.after(now)) {
+            if (((timeOn.before(now) || timeOn.equals(now)) && timeOn.before(timeOff)) && timeOff.after(now)) {
+                // TimeOn after than TimeOff ex. (TimeOn = 22:00 and TimeOff = 06:00)
                 turnOnDimmer();
             } else {
                 turnOffDimmer();
             }
         } else {
             if (timeOn.before(now) && timeOff.after(now)) {
+                // TimeOn before than TimeOff ex. (TimeOn = 01:00 and TimeOff = 06:00 now = 03:00)
                 turnOnDimmer();
             } else {
                 if (timeOn.before(timeOff)) {
+                    // TimeOn after than now ex. (TimeOn = 02:00 and TimeOff = 06:00 now = 01:00)
                     turnOffDimmer();
                 } else {
+                    // TimeOn a day before than TimeOff ex. (TimeOn = 22:00 and TimeOff = 06:00 now = 03:00)
                     turnOnDimmer();
                 }
             }
