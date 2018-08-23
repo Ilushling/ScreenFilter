@@ -3,6 +3,7 @@ package ru.ilushling.screenfilter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 
 import static ru.ilushling.screenfilter.OverlayService.ALARM_TIMER_OFF;
@@ -49,7 +50,11 @@ public class BReceiver extends BroadcastReceiver {
             // Service
             Intent i = new Intent(context, OverlayService.class);
             i.setAction("alarmTimerOn");
-            context.startService(i);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(i);
+            } else {
+                context.startService(i);
+            }
             // Activity
             i = new Intent();
             i.setAction(APP_OVERLAY_ON);
@@ -62,7 +67,11 @@ public class BReceiver extends BroadcastReceiver {
             // Service
             Intent i = new Intent(context, OverlayService.class);
             i.setAction("alarmTimerOff");
-            context.startService(i);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(i);
+            } else {
+                context.startService(i);
+            }
             // Activity
             i = new Intent();
             i.setAction(APP_OVERLAY_OFF);
@@ -75,7 +84,11 @@ public class BReceiver extends BroadcastReceiver {
         if (intent.getAction().equalsIgnoreCase(Intent.ACTION_BOOT_COMPLETED)) {
             Intent serviceIntent = new Intent(context, OverlayService.class);
             serviceIntent.setAction("timerOn");
-            context.startService(serviceIntent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent);
+            } else {
+                context.startService(serviceIntent);
+            }
         }
 
     }

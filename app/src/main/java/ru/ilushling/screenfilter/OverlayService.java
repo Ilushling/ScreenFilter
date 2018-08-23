@@ -49,6 +49,7 @@ public class OverlayService extends Service {
     public static final String OPEN_ACTION = "ru.ilushling.screenfilter.OPEN_ACTION", CLOSE_ACTION = "ru.ilushling.screenfilter.CLOSE_ACTION",
             ALARM_TIMER_ON = "ru.ilushling.screenfilter.alarmTimerOn", ALARM_TIMER_OFF = "ru.ilushling.screenfilter.alarmTimerOff";
     public static final String NOTIFICATION_CHANNEL_ID = "9954", NOTIFICATION_CHANNEL_NAME = "screenfilter";
+    private static final int ID_SERVICE = 9954;
 
     Intent intentTimerOn, intentTimerOff;
     PendingIntent pIntentTimerOn, pIntentTimerOff;
@@ -62,6 +63,8 @@ public class OverlayService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        startNotification();
 
         mSettings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
 
@@ -185,7 +188,7 @@ public class OverlayService extends Service {
                     wm.updateViewLayout(linearDimmer, params);
                 } else {
                     // Add
-                    startNotification();
+                    //startNotification();
                     wm = (WindowManager) getSystemService(WINDOW_SERVICE);
                     linearDimmerColor = new LinearLayout(this);
                     linearDimmer = new LinearLayout(this);
@@ -207,22 +210,6 @@ public class OverlayService extends Service {
         }
     }
 
-    // Get screen height with navigation bar height (Because MATCH_PARENT = SCREEN_SIZE - NAV_BAR)
-    int screenHeight() {
-        int screenHeight = 0;
-        // Screen size
-        Point size = new Point();
-        wm.getDefaultDisplay().getSize(size);
-        // Nav bar
-        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            // screen + nav bar
-            screenHeight = size.y + getResources().getDimensionPixelSize(resourceId);
-        }
-
-        return screenHeight;
-    }
-
     void overlayOff() {
         if (linearDimmerColor != null && linearDimmer != null && wm != null) {
             try {
@@ -240,10 +227,26 @@ public class OverlayService extends Service {
             linearDimmerColor = null;
             linearDimmer = null;
 
-            stopForeground(true);
+            //stopForeground(true);
+        }
+        stopSelf();
+        //Log.e(TAG, "overlay Off");
+    }
+
+    // Get screen height with navigation bar height (Because MATCH_PARENT = SCREEN_SIZE - NAV_BAR)
+    int screenHeight() {
+        int screenHeight = 0;
+        // Screen size
+        Point size = new Point();
+        wm.getDefaultDisplay().getSize(size);
+        // Nav bar
+        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            // screen + nav bar
+            screenHeight = size.y + getResources().getDimensionPixelSize(resourceId);
         }
 
-        //Log.e(TAG, "overlay Off");
+        return screenHeight;
     }
 
     @Override
@@ -279,14 +282,12 @@ public class OverlayService extends Service {
                     NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, importance);
                     mNotificationManager.createNotificationChannel(notificationChannel);
                 }
-                notification = new Notification.Builder(this)
+                notification = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
                         .setContentTitle("Ночной фильтр")
                         .setSmallIcon(R.mipmap.ic_launcher)
-                        .setChannelId(NOTIFICATION_CHANNEL_ID)
                         .setContentIntent(pendingIntentClose)
                         .setContent(customView)
-                        .setAutoCancel(true)
-                        .setChannelId("9954");
+                        .setAutoCancel(true);
 
             } else {
                 notification = new Notification.Builder(this)
@@ -299,8 +300,8 @@ public class OverlayService extends Service {
             // Listeners
             customView.setOnClickPendingIntent(R.id.open_settings, pendingIntentOpen);
 
-            mNotificationManager.notify(9954, notification.build());
-            startForeground(9954, notification.build());
+            mNotificationManager.notify(ID_SERVICE, notification.build());
+            startForeground(ID_SERVICE, notification.build());
         }
     }
 
@@ -318,50 +319,28 @@ public class OverlayService extends Service {
 
 
         // if timeoff before timeon than timeoff set to next day
-        if (timeOff.before(timeOn)) {
+        if (timeOff.before(now)) {
             // Timer to next day
-            timeOff.add(Calendar.DAY_OF_MONTH, 1);
-        }
-
-
-        // Check for turn on
-        if (timeOn.before(now)) {
-            if (timeOff.after(now)) {
-                overlayOn();
-                // UpdateUI
-                Intent i = new Intent(this, BReceiver.class);
-                i.setAction(ALARM_TIMER_ON);
-                sendBroadcast(i);
+            if (timeOn.after(timeOff)) {
+                timeOff.add(Calendar.DAY_OF_MONTH, 1);
             }
-        }
 
-        // Check for instant trigger
-        // time on
-        if (timeOn.before(now)) {
-            // Timer to next day
-            timeOn.add(Calendar.DAY_OF_MONTH, 1);
-
-            // Turn off if timeOff started
-            if (timeOn.after(now) && timeOff.before(now)) {
-                // Turn off overlay
-                overlayOff();
-                // UpdateUI
-                Intent i = new Intent(this, BReceiver.class);
-                i.setAction(ALARM_TIMER_OFF);
-                sendBroadcast(i);
+            if ((timeOn.before(now) && timeOn.before(timeOff)) && timeOff.after(now)) {
+                turnOnDimmer();
+            } else {
+                turnOffDimmer();
             }
         } else {
-            // Turn off if timeOff started
-            if (timeOn.after(now) && timeOff.after(now)) {
-                // Turn off overlay
-                overlayOff();
-                // UpdateUI
-                Intent i = new Intent(this, BReceiver.class);
-                i.setAction(ALARM_TIMER_OFF);
-                sendBroadcast(i);
+            if (timeOn.before(now) && timeOff.after(now)) {
+                turnOnDimmer();
+            } else {
+                if (timeOn.before(timeOff)) {
+                    turnOffDimmer();
+                } else {
+                    turnOnDimmer();
+                }
             }
         }
-
         // Start timer
         am.setRepeating(AlarmManager.RTC, timeOn.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOn);
         am.setRepeating(AlarmManager.RTC, timeOff.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOff);
@@ -369,6 +348,22 @@ public class OverlayService extends Service {
         Log.e(TAG, "timer On");
     }
 
+    void turnOnDimmer() {
+        overlayOn();
+        // UpdateUI
+        Intent i = new Intent(this, BReceiver.class);
+        i.setAction(ALARM_TIMER_ON);
+        sendBroadcast(i);
+    }
+
+    void turnOffDimmer() {
+        // UpdateUI
+        Intent i = new Intent(this, BReceiver.class);
+        i.setAction(ALARM_TIMER_OFF);
+        sendBroadcast(i);
+        // Turn off overlay
+        overlayOff();
+    }
 
     void timerOff() {
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
@@ -381,6 +376,10 @@ public class OverlayService extends Service {
         Log.e(TAG, "alarm is " + (isWorking ? "" : "not ") + "working...");
 
         Log.e(TAG, "timer Off");
+
+        if (linearDimmerColor == null && linearDimmer == null && wm == null) {
+            stopSelf();
+        }
     }
 
     private void loadSettings() {

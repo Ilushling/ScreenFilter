@@ -246,13 +246,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
         intent.setAction("overlayOn");
         intent.putExtra("dimmerColorValue", dimmerColorValue);
         intent.putExtra("dimmerValue", dimmerValue);
-        startService(intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
     }
 
     void overlayOff() {
         Intent intent = new Intent(this, OverlayService.class);
         intent.setAction("overlayOff");
-        startService(intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
     }
 
     // Load values from save
@@ -534,11 +542,20 @@ public class MainActivity extends Activity implements View.OnClickListener {
             intent.putExtra("timerMinuteOn", timerMinuteOn);
             intent.putExtra("timerHourOff", timerHourOff);
             intent.putExtra("timerMinuteOff", timerMinuteOff);
-            startService(intent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent);
+            } else {
+                startService(intent);
+            }
         } else if (!timerOn) {
             // Timer off
             intent.setAction("timerOff");
-            startService(intent);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent);
+            } else {
+                startService(intent);
+            }
         }
     }
 
