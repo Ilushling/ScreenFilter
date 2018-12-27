@@ -150,13 +150,14 @@ public class OverlayService extends Service {
                             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                             WindowManager.LayoutParams.FLAG_FULLSCREEN |
                                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE |
                                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
-                                    WindowManager.LayoutParams.TYPE_TOAST |
+                                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
                                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |
                                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
                                     WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION
                             ,
-                            PixelFormat.TRANSLUCENT);
+                            PixelFormat.TRANSPARENT);
                 } else {
                     params = new WindowManager.LayoutParams(
                             WindowManager.LayoutParams.MATCH_PARENT,
@@ -165,14 +166,15 @@ public class OverlayService extends Service {
                             WindowManager.LayoutParams.FLAG_FULLSCREEN |
                                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
                                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
                                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |
                                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
                                     WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION
                             ,
-                            PixelFormat.TRANSLUCENT);
+                            PixelFormat.TRANSPARENT);
                 }
 
-                params.gravity = Gravity.TOP;
+                params.gravity = Gravity.START | Gravity.TOP;
                 params.x = 0;
                 params.y = 0;
 
@@ -235,18 +237,20 @@ public class OverlayService extends Service {
 
     // Get screen height with navigation bar height (Because MATCH_PARENT = SCREEN_SIZE - NAV_BAR)
     int screenHeight() {
-        int screenHeight = 0;
         // Screen size
         Point size = new Point();
         wm.getDefaultDisplay().getSize(size);
+        int max = Math.max(
+                size.x,
+                size.y
+        );
         // Nav bar
         int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
         if (resourceId > 0) {
             // screen + nav bar
-            screenHeight = size.y + getResources().getDimensionPixelSize(resourceId);
+            return max + getResources().getDimensionPixelSize(resourceId);
         }
-
-        return screenHeight;
+        return 0;
     }
 
     @Override
