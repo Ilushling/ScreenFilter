@@ -94,7 +94,7 @@ public class OverlayService extends Service {
                 theme = intent.getStringExtra("theme");
                 dimmerColorValue = intent.getIntExtra("dimmerColorValue", 0);
                 dimmerValue = intent.getIntExtra("dimmerValue", 0);
-                temperature = intent.getIntExtra("temperature", 3);
+                temperature = intent.getIntExtra("temperature", 4);
 
                 overlayOn();
                 break;
@@ -224,7 +224,7 @@ public class OverlayService extends Service {
                 linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
                 break;
             default:
-                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 110, 50));
+                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 135, 60));
                 linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
                 break;
         }
@@ -435,7 +435,7 @@ public class OverlayService extends Service {
         }
         // Temperature
         if (mSettings.contains(APP_PREFERENCES_TEMPERATURE)) {
-            temperature = mSettings.getInt(APP_PREFERENCES_TEMPERATURE, 3);
+            temperature = mSettings.getInt(APP_PREFERENCES_TEMPERATURE, 4);
         }
 
         // Switch

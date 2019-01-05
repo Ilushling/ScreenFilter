@@ -8,24 +8,40 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
+import android.os.Bundle;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.util.List;
 
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_NAME;
 
 public class Utils {
+
     // [START Battery protection]
     public static void protectAppManager(final Context context) {
         SharedPreferences settings = context.getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
         boolean skipMessage = settings.getBoolean("skipProtectedAppCheck", false);
+
+        // Obtain the FirebaseAnalytics instance.
+        final FirebaseAnalytics mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
+
         if (!skipMessage) {
             final SharedPreferences.Editor editor = settings.edit();
             boolean foundCorrectIntent = false;
             for (final Intent intent : ListPowerManager.POWERMANAGER_INTENTS) {
                 if (isCallable(context, intent)) {
+                    // Firebase
+                    Bundle bundle = new Bundle();
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "1");
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "protectAppManager");
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_BRAND, Build.MANUFACTURER);
+                    bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "Show");
+                    mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+
                     foundCorrectIntent = true;
 
                     View dontShowView = View.inflate(context, R.layout.check_box, null);
@@ -46,6 +62,13 @@ public class Utils {
                             .setPositiveButton(R.string.go_to_settings, new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
                                     context.startActivity(intent);
+
+                                    Bundle bundle = new Bundle();
+                                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "1");
+                                    bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "protectAppManager");
+                                    bundle.putString(FirebaseAnalytics.Param.ITEM_BRAND, Build.MANUFACTURER);
+                                    bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "Set");
+                                    mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
                                 }
                             })
                             .setNegativeButton(android.R.string.cancel, null)

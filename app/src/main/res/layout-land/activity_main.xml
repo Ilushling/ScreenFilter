@@ -22,13 +22,16 @@
                 android:id="@+id/UIMain"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginLeft="8dp"
                 android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginRight="8dp"
                 android:background="@drawable/ui_background"
                 android:padding="10dp"
-                app:layout_constraintHorizontal_bias="1.0"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/UISettings"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:layout_constraintLeft_creator="1"
                 tools:layout_constraintRight_creator="1">
@@ -344,16 +347,15 @@
                 android:id="@+id/UISettings"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginLeft="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginRight="10dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginRight="8dp"
                 android:background="@drawable/ui_background"
                 android:padding="10dp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/UIMain">
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/UIMain"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <android.support.constraint.ConstraintLayout
                     android:id="@+id/Temperature"
@@ -391,7 +393,8 @@
                             android:layout_weight="1"
                             android:background="@drawable/radiobutton_background"
                             android:button="@drawable/radiobutton_selector"
-                            android:checked="true"/>
+                            android:checked="true"
+                            />
 
                         <RadioButton
                             android:id="@+id/temperature2"
@@ -402,7 +405,8 @@
                             android:layout_weight="1"
                             android:background="@drawable/radiobutton_background"
                             android:button="@drawable/radiobutton_selector"
-                            android:checked="false"/>
+                            android:checked="false"
+                            />
 
                         <RadioButton
                             android:id="@+id/temperature3"
@@ -413,7 +417,8 @@
                             android:layout_weight="1"
                             android:background="@drawable/radiobutton_background"
                             android:button="@drawable/radiobutton_selector"
-                            android:checked="false"/>
+                            android:checked="false"
+                            />
 
                         <RadioButton
                             android:id="@+id/temperature4"
@@ -424,7 +429,8 @@
                             android:layout_weight="1"
                             android:background="@drawable/radiobutton_background"
                             android:button="@drawable/radiobutton_selector"
-                            android:checked="false"/>
+                            android:checked="false"
+                            />
 
                         <RadioButton
                             android:id="@+id/temperature5"
@@ -435,7 +441,8 @@
                             android:layout_weight="1"
                             android:background="@drawable/radiobutton_background"
                             android:button="@drawable/radiobutton_selector"
-                            android:checked="false"/>
+                            android:checked="false"
+                            />
                     </RadioGroup>
 
                 </android.support.constraint.ConstraintLayout>
@@ -571,7 +578,7 @@
         app:adUnitId="@string/banner_ad_unit_id"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.902"
         app:layout_constraintStart_toStartOf="parent">
     </com.google.android.gms.ads.AdView>
 

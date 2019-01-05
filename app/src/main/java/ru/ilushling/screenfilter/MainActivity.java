@@ -20,6 +20,7 @@ import android.provider.Settings;
 import android.support.constraint.ConstraintLayout;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.RadioButton;
@@ -28,6 +29,12 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import static ru.ilushling.screenfilter.Utils.protectAppManager;
 
 
@@ -35,20 +42,25 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     // Common
     String TAG = "MainActivity";
-    boolean first = true;
+
+    // Dimmer
+    public static final String APP_PREFERENCES_DIMMER_ON = "dimmerOn", APP_PREFERENCES_DIMMER_COLOR = "dimmerColor",
+            APP_PREFERENCES_DIMMER = "dimmer", APP_PREFERENCES_TEMPERATURE = "temperature", APP_PREFERENCES_CHARITY = "charity", APP_PREFERENCES_OPEN_SETTINGS = "openSettings";
+    boolean first = true, charity, openUISettings;
+    CheckBox charity_cb;
     public static final String APP_PREFERENCES_THEME = "theme";
     Switch dimmerSwitch, timerSwitch;
     protected TextView timerTimeOn, timerTimeOff;
     SeekBar dimmer, dimmerColor;
-    // Dimmer
-    public static final String APP_PREFERENCES_DIMMER_ON = "dimmerOn", APP_PREFERENCES_DIMMER_COLOR = "dimmerColor", APP_PREFERENCES_DIMMER = "dimmer", APP_PREFERENCES_TEMPERATURE = "temperature";
-    TextView dimmerColor_status, dimmer_status;
     // UI
-    ConstraintLayout UIMain, Wrapper, UISettings;
+    ConstraintLayout UIMain, Wrapper, Wrapper1, UISettings;
+    RadioButton temperature1_rb, temperature2_rb, temperature3_rb, temperature4_rb, temperature5_rb, darkTheme, lightTheme;
+    TextView dimmerColor_status, dimmer_status;
+    private AdView mAdView;
 
     // Save Settings
     SharedPreferences mSettings;
-    RadioButton temperature1rb, temperature2rb, temperature3rb, temperature4rb, temperature5rb, darkTheme, lightTheme;
+    private FirebaseAnalytics mFirebaseAnalytics;
     // Name setting file
     public static final String APP_PREFERENCES_NAME = "PREFERENCE_FILE";
     ImageButton settingsButton;
@@ -62,6 +74,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     boolean dimmerOn, timerOn;
     int temperature;
     protected String timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff;
+
+
     // Close
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -86,33 +100,44 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        mAdView = findViewById(R.id.adView);
+        MobileAds.initialize(this, "@string/banner_ad_unit_id");
 
-        temperature1rb = findViewById(R.id.temperature1);
-        temperature1rb.setOnClickListener(this);
-        temperature2rb = findViewById(R.id.temperature2);
-        temperature2rb.setOnClickListener(this);
-        temperature3rb = findViewById(R.id.temperature3);
-        temperature3rb.setOnClickListener(this);
-        temperature4rb = findViewById(R.id.temperature4);
-        temperature4rb.setOnClickListener(this);
-        temperature5rb = findViewById(R.id.temperature5);
-        temperature5rb.setOnClickListener(this);
+        // Zonds
+        Bundle bundle = new Bundle();
+        bundle.putString("Open_app", "user openned app");
+        mFirebaseAnalytics.logEvent("my_custom_event_open", bundle);
 
-        GradientDrawable gd = (GradientDrawable) temperature1rb.getBackground();
+
+        temperature1_rb = findViewById(R.id.temperature1);
+        temperature1_rb.setOnClickListener(this);
+        temperature2_rb = findViewById(R.id.temperature2);
+        temperature2_rb.setOnClickListener(this);
+        temperature3_rb = findViewById(R.id.temperature3);
+        temperature3_rb.setOnClickListener(this);
+        temperature4_rb = findViewById(R.id.temperature4);
+        temperature4_rb.setOnClickListener(this);
+        temperature5_rb = findViewById(R.id.temperature5);
+        temperature5_rb.setOnClickListener(this);
+
+        GradientDrawable gd = (GradientDrawable) temperature1_rb.getBackground();
         gd.setColor(Color.rgb(255, 50, 20));
-        GradientDrawable gd2 = (GradientDrawable) temperature2rb.getBackground();
+        GradientDrawable gd2 = (GradientDrawable) temperature2_rb.getBackground();
         gd2.setColor(Color.rgb(255, 90, 40));
-        GradientDrawable gd3 = (GradientDrawable) temperature3rb.getBackground();
+        GradientDrawable gd3 = (GradientDrawable) temperature3_rb.getBackground();
         gd3.setColor(Color.rgb(255, 110, 50));
-        GradientDrawable gd4 = (GradientDrawable) temperature4rb.getBackground();
+        GradientDrawable gd4 = (GradientDrawable) temperature4_rb.getBackground();
         gd4.setColor(Color.rgb(255, 135, 60));
-        GradientDrawable gd5 = (GradientDrawable) temperature5rb.getBackground();
+        GradientDrawable gd5 = (GradientDrawable) temperature5_rb.getBackground();
         gd5.setColor(Color.rgb(255, 160, 75));
 
         // UI
         Wrapper = findViewById(R.id.Wrapper);
         Wrapper.setOnClickListener(this);
-        Wrapper.setAlpha(0);
+        Wrapper1 = findViewById(R.id.Wrapper1);
+        Wrapper1.setOnClickListener(this);
 
         UIMain = findViewById(R.id.UIMain);
         UIMain.setOnClickListener(new View.OnClickListener() {
@@ -130,7 +155,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             }
         });
-        Wrapper.setAlpha(0);
 
         settingsButton = findViewById(R.id.settingsButton);
         settingsButton.setOnClickListener(this);
@@ -153,21 +177,65 @@ public class MainActivity extends Activity implements View.OnClickListener {
         lightTheme = findViewById(R.id.lightTheme);
         lightTheme.setOnClickListener(this);
 
+        // Charity
+        charity_cb = findViewById(R.id.charity);
+        charity_cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                charity = isChecked;
+                // Analytics
+                boolean charityLoad = charity;
+                if (mSettings.contains(APP_PREFERENCES_CHARITY)) {
+                    try {
+                        charityLoad = mSettings.getBoolean(APP_PREFERENCES_CHARITY, false);
+                    } catch (Exception e) {
+                    }
+                }
+
+                if (!isChecked) {
+                    hideAd();
+
+                    if (charityLoad != charity) {
+                        Bundle bundle = new Bundle();
+                        bundle.putString("Charity", "user activate thanks");
+                        mFirebaseAnalytics.logEvent("activate_charity", bundle);
+                    }
+                } else {
+                    showAd();
+                    if (charityLoad != charity) {
+                        Bundle bundle = new Bundle();
+                        bundle.putString("Charity", "user deactivate app");
+                        mFirebaseAnalytics.logEvent("deactivate_charity", bundle);
+                    }
+                }
+
+                saveSettings(APP_PREFERENCES_CHARITY, charity);
+            }
+        });
+
+
         // Settings
         mSettings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
+
+        // Check allows
+        checkAllows();
+        // Protect Power Manager
+        protectAppManager(this);
 
         // Dimmer
         dimmerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                dimmerOn = isChecked;
-                saveSettings(APP_PREFERENCES_DIMMER_ON, dimmerOn);
+                if (checkAllows()) {
+                    dimmerOn = isChecked;
+                    saveSettings(APP_PREFERENCES_DIMMER_ON, dimmerOn);
 
-                if (dimmerOn) {
-                    overlayService();
-                } else {
-                    overlayOff();
+                    if (dimmerOn) {
+                        overlayService();
+                    } else {
+                        overlayOff();
+                    }
                 }
             }
         });
@@ -177,16 +245,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                timerOn = isChecked;
-                saveSettings(APP_PREFERENCES_TIMER_ON, timerOn);
-                timerService();
+                if (checkAllows()) {
+                    timerOn = isChecked;
+                    saveSettings(APP_PREFERENCES_TIMER_ON, timerOn);
+                    timerService();
 
-                if (timerOn) {
-                    timerTimeOn.setEnabled(true);
-                    timerTimeOff.setEnabled(true);
-                } else {
-                    timerTimeOn.setEnabled(false);
-                    timerTimeOff.setEnabled(false);
+                    if (timerOn) {
+                        timerTimeOn.setEnabled(true);
+                        timerTimeOff.setEnabled(true);
+                    } else {
+                        timerTimeOn.setEnabled(false);
+                        timerTimeOff.setEnabled(false);
+                    }
                 }
             }
 
@@ -246,8 +316,29 @@ public class MainActivity extends Activity implements View.OnClickListener {
         });
     }
 
+    boolean checkAllows() {
+        /**
+         * for Android 6 and below need to check permissions
+         * 1 check version SDK (>= M)
+         * 2 check Permission if don't have need request them (Dialog)
+         * 3 if don't work dialog run alternative via settings (Activity result)
+         */
+
+        if (isCheckPermissionAlternative()) {
+            permitted();
+            // CLOSE_SYSTEM_DIALOGS
+            Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+            sendBroadcast(it);
+            return true;
+        } else {
+            resricted();
+            return false;
+        }
+    }
+
     void permitted() {
         dimmerSwitch.setEnabled(true);
+        settingsButton.setEnabled(true);
         dimmerColor.setEnabled(true);
         dimmer.setEnabled(true);
         timerSwitch.setEnabled(true);
@@ -256,11 +347,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     void resricted() {
-        dimmerSwitch.setEnabled(false);
+        //dimmerSwitch.setEnabled(false);
         dimmerSwitch.setChecked(false);
+        settingsButton.setEnabled(false);
+        hideUISettings();
         dimmerColor.setEnabled(false);
         dimmer.setEnabled(false);
-        timerSwitch.setEnabled(false);
+        //timerSwitch.setEnabled(false);
         timerSwitch.setChecked(false);
         timerTimeOn.setEnabled(false);
         timerTimeOff.setEnabled(false);
@@ -270,31 +363,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onStart() {
         super.onStart();
 
-        /**
-         * for Android 6 and below need to check permissions
-         * 1 check version SDK (>= M)
-         * 2 check Permission if don't have need request them (Dialog)
-         * 3 if don't work dialog run alternative via settings (Activity result)
-         */
-        if (isCheckPermissionAlternative()) {
-            permitted();
-
-            loadSettings();
-
-            // CLOSE_SYSTEM_DIALOGS
-            Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-            sendBroadcast(it);
-        } else {
-            resricted();
-        }
-        // Protect Power Manager
-        protectAppManager(this);
+        loadSettings();
     }
 
     private void overlayService() {
         if (dimmerColorValue == 0 && dimmerValue == 0) {
             overlayOff();
-        } else if (dimmerOn && !first) {
+        } else if (dimmerOn && checkAllows() && !first) {
             overlayOn();
         }
     }
@@ -306,26 +381,20 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.Wrapper:
                 closeActivity();
                 break;
+            case R.id.Wrapper1:
+                closeActivity();
+                break;
             case R.id.settingsButton:
                 if (UISettings.getVisibility() == View.GONE) {
                     // Show
-                    // Visibility
-                    UISettings.setVisibility(View.VISIBLE);
-                    // Animation alpha
-                    UISettings.animate().alpha(1.0f).setDuration(150);
+                    showUISettings();
+                    openUISettings = true;
+                    saveSettings(APP_PREFERENCES_OPEN_SETTINGS, openUISettings);
                 } else {
                     // Hide
-                    // Animation alpha
-                    UISettings.animate().alpha(0.0f).setDuration(150).setListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            super.onAnimationEnd(animation);
-                            // Visibility
-                            UISettings.setVisibility(View.GONE);
-                            // Clear listener
-                            UISettings.animate().setListener(null);
-                        }
-                    });
+                    hideUISettings();
+                    openUISettings = false;
+                    saveSettings(APP_PREFERENCES_OPEN_SETTINGS, openUISettings);
                 }
                 break;
             case R.id.temperature1:
@@ -357,13 +426,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 if (!theme.equals("dark")) {
                     theme = "dark";
                     saveSettings(APP_PREFERENCES_THEME, theme);
-                    intent = new Intent(this, OverlayService.class);
-                    intent.setAction("theme");
-                    intent.putExtra("theme", theme);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        startForegroundService(intent);
-                    } else {
-                        startService(intent);
+                    if (dimmerSwitch.isChecked()) {
+                        intent = new Intent(this, OverlayService.class);
+                        intent.setAction("theme");
+                        intent.putExtra("theme", theme);
+
+                        if (checkAllows()) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                startForegroundService(intent);
+                            } else {
+                                startService(intent);
+                            }
+                        }
                     }
                 }
                 break;
@@ -371,13 +445,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 if (!theme.equals("light")) {
                     theme = "light";
                     saveSettings(APP_PREFERENCES_THEME, theme);
-                    intent = new Intent(this, OverlayService.class);
-                    intent.setAction("theme");
-                    intent.putExtra("theme", theme);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        startForegroundService(intent);
-                    } else {
-                        startService(intent);
+                    if (dimmerSwitch.isChecked()) {
+                        intent = new Intent(this, OverlayService.class);
+                        intent.setAction("theme");
+                        intent.putExtra("theme", theme);
+
+                        if (checkAllows()) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                startForegroundService(intent);
+                            } else {
+                                startService(intent);
+                            }
+                        }
                     }
                 }
                 break;
@@ -647,34 +726,34 @@ public class MainActivity extends Activity implements View.OnClickListener {
         // Temperature
         if (mSettings.contains(APP_PREFERENCES_TEMPERATURE)) {
             try {
-                temperature = mSettings.getInt(APP_PREFERENCES_TEMPERATURE, 3);
+                temperature = mSettings.getInt(APP_PREFERENCES_TEMPERATURE, 4);
                 switch (temperature) {
                     case 1:
-                        temperature1rb.setChecked(true);
+                        temperature1_rb.setChecked(true);
                         break;
                     case 2:
-                        temperature2rb.setChecked(true);
+                        temperature2_rb.setChecked(true);
                         break;
                     case 3:
-                        temperature3rb.setChecked(true);
+                        temperature3_rb.setChecked(true);
                         break;
                     case 4:
-                        temperature4rb.setChecked(true);
+                        temperature4_rb.setChecked(true);
                         break;
                     case 5:
-                        temperature5rb.setChecked(true);
+                        temperature5_rb.setChecked(true);
                         break;
                     default:
-                        temperature3rb.setChecked(true);
+                        temperature4_rb.setChecked(true);
                         break;
 
                 }
             } catch (Exception exc) {
                 clearSetting(APP_PREFERENCES_TEMPERATURE);
-                saveSettings(APP_PREFERENCES_TEMPERATURE, 3);
+                saveSettings(APP_PREFERENCES_TEMPERATURE, 4);
             }
         } else {
-            saveSettings(APP_PREFERENCES_TEMPERATURE, 3);
+            saveSettings(APP_PREFERENCES_TEMPERATURE, 4);
         }
         // [END Overlay]
 
@@ -750,6 +829,37 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         // [END Timer]
 
+        // Open Settings
+        if (mSettings.contains(APP_PREFERENCES_OPEN_SETTINGS)) {
+            try {
+                openUISettings = mSettings.getBoolean(APP_PREFERENCES_OPEN_SETTINGS, false);
+                if (openUISettings) {
+                    showUISettings();
+                } else {
+                    hideUISettings();
+                }
+            } catch (Exception exc) {
+                clearSetting(APP_PREFERENCES_OPEN_SETTINGS);
+                saveSettings(APP_PREFERENCES_OPEN_SETTINGS, false);
+            }
+        } else {
+            saveSettings(APP_PREFERENCES_OPEN_SETTINGS, false);
+        }
+        // Advertisement
+        if (mSettings.contains(APP_PREFERENCES_CHARITY)) {
+            try {
+                charity = mSettings.getBoolean(APP_PREFERENCES_CHARITY, false);
+                charity_cb.setChecked(charity);
+            } catch (Exception exc) {
+                clearSetting(APP_PREFERENCES_TIMER_MINUTE_OFF);
+                saveSettings(APP_PREFERENCES_TIMER_MINUTE_OFF, false);
+                charity_cb.setChecked(charity);
+            }
+        } else {
+            saveSettings(APP_PREFERENCES_CHARITY, false);
+            charity_cb.setChecked(charity);
+        }
+
         // [START format minutes to 00]
         // ON
         StringBuilder sb = new StringBuilder();
@@ -800,6 +910,80 @@ public class MainActivity extends Activity implements View.OnClickListener {
          */
         first = false;
         overlayService();
+    }
+
+    void showUISettings() {
+        UISettings.setVisibility(View.VISIBLE);
+        // Animation alpha
+        UISettings.animate().alpha(1.0f).setDuration(150);
+
+        // ADS
+        if (charity) {
+            showAd();
+        }
+    }
+
+    void hideUISettings() {
+        // Animation alpha
+        UISettings.animate().alpha(0.0f).setDuration(150).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                // Visibility
+                UISettings.setVisibility(View.GONE);
+                // Clear listener
+                UISettings.animate().setListener(null);
+                hideAd();
+            }
+        });
+    }
+
+    void showAd() {
+        AdRequest adRequest = new AdRequest.Builder().addTestDevice("1D5A1AEA8E6CA40D5189183547904B82").addTestDevice("3EC30EB95D85614AD55C26E956492D9E").build();
+        mAdView = findViewById(R.id.adView);
+        mAdView.loadAd(adRequest);
+        mAdView.setVisibility(View.VISIBLE);
+        mAdView.setAdListener(new AdListener() {
+            @Override
+            public void onAdLoaded() {
+                // Code to be executed when an ad finishes loading.
+                Log.e(TAG, "loaded");
+            }
+
+            @Override
+            public void onAdFailedToLoad(int errorCode) {
+                // Code to be executed when an ad request fails.
+                Log.e(TAG, "failed: " + errorCode);
+            }
+
+            @Override
+            public void onAdOpened() {
+                // Code to be executed when an ad opens an overlay that
+                // covers the screen.
+
+                Log.e(TAG, "opened");
+            }
+
+            @Override
+            public void onAdLeftApplication() {
+                // Code to be executed when the user has left the app.
+
+                Log.e(TAG, "left app");
+            }
+
+            @Override
+            public void onAdClosed() {
+                // Code to be executed when when the user is about to return
+                // to the app after tapping on an ad.
+
+                Log.e(TAG, "closed");
+            }
+        });
+    }
+
+    void hideAd() {
+        mAdView.destroy();
+        mAdView.setVisibility(View.GONE);
     }
 
     // Alternative permission
