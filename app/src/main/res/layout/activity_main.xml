@@ -10,7 +10,7 @@
     tools:context="ru.ilushling.screenfilter.MainActivity">
 
     <android.support.constraint.ConstraintLayout
-        android:id="@+id/UIWrapper"
+        android:id="@+id/UIMain"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
@@ -32,11 +32,10 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:id="@+id/imageView"
+                android:id="@+id/logo"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
-                android:layout_marginBottom="0dp"
-                android:layout_marginTop="0dp"
+                android:contentDescription="logo"
                 android:scaleType="fitCenter"
                 android:src="@mipmap/ic_launcher"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -45,18 +44,17 @@
                 app:layout_constraintVertical_bias="1.0"/>
 
             <TextView
-                android:id="@+id/textView"
+                android:id="@+id/logoText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
                 android:layout_marginLeft="8dp"
-                android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
                 android:fontFamily="sans-serif-light"
                 android:text="@string/app_name"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toRightOf="@+id/imageView"
+                app:layout_constraintLeft_toRightOf="@+id/logo"
                 app:layout_constraintTop_toTopOf="parent"/>
 
             <Switch
@@ -65,26 +63,41 @@
                 android:layout_height="0dp"
                 android:layout_marginRight="8dp"
                 android:checked="false"
+                android:contentDescription="switch"
                 android:showText="false"
                 android:splitTrack="false"
                 android:switchMinWidth="40dp"
                 android:thumb="@drawable/seekbar_custom_thumb"
                 android:track="@drawable/switch_track"
-                app:layout_constraintBottom_toBottomOf="@+id/imageView"
+                app:layout_constraintBottom_toBottomOf="@+id/logo"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/imageView"
+                app:layout_constraintTop_toTopOf="@+id/logo"
                 tools:checked="false"/>
+
+            <ImageButton
+                android:id="@+id/settingsButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="8dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="settings"
+                android:padding="8dp"
+                android:src="@drawable/notification_settings"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toLeftOf="@+id/dimmerSwitch"
+                app:layout_constraintTop_toTopOf="parent"/>
+
         </android.support.constraint.ConstraintLayout>
 
         <View
-            android:id="@+id/divider_top"
+            android:id="@+id/dividerTop"
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
             android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
             android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
             android:background="@color/divider"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
@@ -97,21 +110,21 @@
             android:layout_marginTop="8dp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/divider_top">
+            app:layout_constraintTop_toBottomOf="@+id/dividerTop">
 
             <ImageView
-                android:id="@+id/Dimmercolor_image"
+                android:id="@+id/dimmerColorIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:contentDescription="color"
                 android:padding="10dp"
                 android:src="@drawable/image_dimmercolor"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                />
+                app:layout_constraintTop_toTopOf="parent"/>
 
             <SeekBar
-                android:id="@+id/DimmerColor_seekbar"
+                android:id="@+id/dimmerColorSeekbar"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -121,14 +134,14 @@
                 android:thumb="@drawable/seekbar_custom_thumb"
                 android:thumbOffset="8dp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toRightOf="@+id/Dimmercolor_image"
-                app:layout_constraintRight_toLeftOf="@+id/DimmerColor_status"
+                app:layout_constraintLeft_toRightOf="@+id/dimmerColorIcon"
+                app:layout_constraintRight_toLeftOf="@+id/dimmerColorStatus"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:layout_constraintLeft_creator="1"
                 tools:layout_constraintRight_creator="1"/>
 
             <TextView
-                android:id="@+id/DimmerColor_status"
+                android:id="@+id/dimmerColorStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
                 android:layout_marginRight="0dp"
@@ -145,14 +158,14 @@
         </android.support.constraint.ConstraintLayout>
 
         <View
-            android:id="@+id/divider_dimmer"
+            android:id="@+id/dividerDimmer"
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
             android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
             android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
             android:background="@color/divider"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
@@ -165,25 +178,24 @@
             android:layout_marginTop="8dp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/divider_dimmer"
+            app:layout_constraintTop_toBottomOf="@+id/dividerDimmer"
             >
 
             <ImageView
-                android:id="@+id/Dimmer_image"
+                android:id="@+id/dimmerIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:contentDescription="brightness"
                 android:padding="10dp"
                 android:src="@drawable/image_dimmer"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                />
+                app:layout_constraintTop_toTopOf="parent"/>
 
             <SeekBar
-                android:id="@+id/Dimmer_seekbar"
+                android:id="@+id/dimmerSeekbar"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
                 android:layout_gravity="center_vertical"
                 android:max="218"
                 android:padding="10dp"
@@ -191,15 +203,14 @@
                 android:thumb="@drawable/seekbar_custom_thumb"
                 android:thumbOffset="8dp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintLeft_toRightOf="@+id/Dimmer_image"
-                app:layout_constraintRight_toLeftOf="@+id/Dimmer_status"
+                app:layout_constraintLeft_toRightOf="@+id/dimmerIcon"
+                app:layout_constraintRight_toLeftOf="@+id/dimmerStatus"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:layout_constraintLeft_creator="1"
                 tools:layout_constraintRight_creator="1"/>
 
             <TextView
-                android:id="@+id/Dimmer_status"
+                android:id="@+id/dimmerStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
                 android:fontFamily="sans-serif-thin"
@@ -216,14 +227,14 @@
         </android.support.constraint.ConstraintLayout>
 
         <View
-            android:id="@+id/divider_timer"
+            android:id="@+id/dividerTimerHorizontal"
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
             android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
             android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
             android:background="@color/divider"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
@@ -236,12 +247,13 @@
             android:layout_marginTop="8dp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/divider_timer">
+            app:layout_constraintTop_toBottomOf="@+id/dividerTimerHorizontal">
 
             <ImageView
-                android:id="@+id/TimeImage"
+                android:id="@+id/timeIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:contentDescription="timer"
                 android:padding="10dp"
                 android:src="@drawable/image_time"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -258,17 +270,17 @@
                 android:text="ON 22:00"
                 android:textSize="@dimen/text_size"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toRightOf="@+id/TimeImage"
-                app:layout_constraintRight_toLeftOf="@+id/dividerTimer"
+                app:layout_constraintLeft_toRightOf="@+id/timeIcon"
+                app:layout_constraintRight_toLeftOf="@+id/dividerTimerVertical"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.0"/>
 
             <View
-                android:id="@+id/dividerTimer"
+                android:id="@+id/dividerTimerVertical"
                 android:layout_width="1dp"
                 android:layout_height="0dp"
-                android:layout_marginBottom="16dp"
                 android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
                 android:background="@color/divider"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/timerTimeOn"
@@ -285,7 +297,7 @@
                 android:text="OFF 7:00"
                 android:textSize="@dimen/text_size"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toRightOf="@+id/dividerTimer"
+                app:layout_constraintLeft_toRightOf="@+id/dividerTimerVertical"
                 app:layout_constraintRight_toLeftOf="@+id/timerSwitch"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.0"/>
@@ -296,6 +308,7 @@
                 android:layout_height="0dp"
                 android:layout_marginRight="8dp"
                 android:checked="false"
+                android:contentDescription="timer switch"
                 android:showText="false"
                 android:switchMinWidth="40dp"
                 android:thumb="@drawable/seekbar_custom_thumb"
@@ -308,22 +321,173 @@
         </android.support.constraint.ConstraintLayout>
     </android.support.constraint.ConstraintLayout>
 
-    <Button
-        android:id="@+id/button_close"
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/UISettings"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:alpha="0"
-        android:text="Button"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="64dp"
+        android:background="@drawable/ui_background"
+        android:padding="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/UIWrapper"
-        tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/UIMain">
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/Temperature"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/temperatureIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="6dp"
+                android:src="@drawable/temperature_icon"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+            <RadioGroup
+                android:id="@+id/radioGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/temperatureIcon"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <RadioButton
+                    android:id="@+id/temperature1"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:layout_marginLeft="14dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/radiobutton_background"
+                    android:button="@drawable/radiobutton_selector"
+                    android:checked="true"/>
+
+                <RadioButton
+                    android:id="@+id/temperature2"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:layout_marginLeft="14dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/radiobutton_background"
+                    android:button="@drawable/radiobutton_selector"
+                    android:checked="false"/>
+
+                <RadioButton
+                    android:id="@+id/temperature3"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:layout_marginLeft="14dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/radiobutton_background"
+                    android:button="@drawable/radiobutton_selector"
+                    android:checked="false"/>
+
+                <RadioButton
+                    android:id="@+id/temperature4"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:layout_marginLeft="14dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/radiobutton_background"
+                    android:button="@drawable/radiobutton_selector"
+                    android:checked="false"/>
+
+                <RadioButton
+                    android:id="@+id/temperature5"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:layout_marginLeft="14dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/radiobutton_background"
+                    android:button="@drawable/radiobutton_selector"
+                    android:checked="false"/>
+            </RadioGroup>
+
+        </android.support.constraint.ConstraintLayout>
+
+        <View
+            android:id="@+id/dividerTemperature"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginRight="8dp"
+            android:background="@color/divider"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/Temperature"/>
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/Notification"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/dividerTemperature">
+
+            <ImageView
+                android:id="@+id/themeIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:src="@drawable/notification_icon"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+            <RadioGroup
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="@drawable/radiobutton_theme"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/themeIcon"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <RadioButton
+                    android:id="@+id/darkTheme"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/radiobutton_dark"
+                    android:button="@null"
+                    android:checked="true"
+                    android:gravity="center_vertical|center_horizontal"
+                    android:text="@string/dark"
+                    android:textColor="@drawable/radiobutton_theme_text_dark"/>
+
+                <RadioButton
+                    android:id="@+id/lightTheme"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/radiobutton_light"
+                    android:button="@null"
+                    android:checked="false"
+                    android:gravity="center_vertical|center_horizontal"
+                    android:text="@string/light"
+                    android:textColor="@drawable/radiobutton_theme_text_light"/>
+            </RadioGroup>
+
+        </android.support.constraint.ConstraintLayout>
+
+    </android.support.constraint.ConstraintLayout>
 
     <android.support.constraint.Guideline
         android:id="@+id/guideline"

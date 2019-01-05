@@ -26,6 +26,8 @@ import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_DIMMER;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_DIMMER_COLOR;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_DIMMER_ON;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_NAME;
+import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_TEMPERATURE;
+import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_THEME;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_TIMER_HOUR_OFF;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_TIMER_HOUR_ON;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_TIMER_MINUTE_OFF;
@@ -40,7 +42,8 @@ public class OverlayService extends Service {
     WindowManager wm;
     Notification.Builder notification;
     // Variables
-    int dimmerColorValue, dimmerValue;
+    String theme = "";
+    int dimmerColorValue, dimmerValue, temperature;
     boolean timerOn;
     protected String timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff;
     // Save Settings
@@ -64,9 +67,10 @@ public class OverlayService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        startNotification();
-
         mSettings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
+        loadSettings();
+
+        startNotification();
 
         intentTimerOn = createIntent(ALARM_TIMER_ON);
         pIntentTimerOn = PendingIntent.getBroadcast(this, 0, intentTimerOn, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -87,8 +91,10 @@ public class OverlayService extends Service {
 
         switch (action) {
             case "overlayOn":
+                theme = intent.getStringExtra("theme");
                 dimmerColorValue = intent.getIntExtra("dimmerColorValue", 0);
                 dimmerValue = intent.getIntExtra("dimmerValue", 0);
+                temperature = intent.getIntExtra("temperature", 3);
 
                 overlayOn();
                 break;
@@ -112,6 +118,11 @@ public class OverlayService extends Service {
             case "alarmTimerOff":
                 overlayOff();
                 break;
+            case "theme":
+                theme = intent.getStringExtra("theme");
+                stopForeground(true);
+                startNotification();
+                break;
         }
 
 
@@ -124,22 +135,6 @@ public class OverlayService extends Service {
             if (dimmerColorValue == 0 && dimmerValue == 0) {
                 notification = null;
             } else {
-                // Proccesing Values of DIMMER
-                // Color
-                StringBuilder sb = new StringBuilder();
-                sb.append(Integer.toHexString(dimmerColorValue));
-                if (sb.length() < 2) {
-                    sb.insert(0, '0'); // pad with leading zero if needed
-                }
-                String dimmerColorValue = sb.toString();
-                // Dim
-                sb = new StringBuilder();
-                sb.append(Integer.toHexString(dimmerValue));
-                if (sb.length() < 2) {
-                    sb.insert(0, '0'); // pad with leading zero if needed
-                }
-                String dimmerValue = sb.toString();
-
                 // Prepare UI
                 // UI Params
                 WindowManager.LayoutParams params;
@@ -165,6 +160,7 @@ public class OverlayService extends Service {
                             WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
                             WindowManager.LayoutParams.FLAG_FULLSCREEN |
                                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE |
                                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
                                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
                                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |
@@ -180,11 +176,7 @@ public class OverlayService extends Service {
 
                 // Add or Update UI
                 if (wm != null && linearDimmerColor != null && linearDimmer != null) {
-                    // Update
-                    linearDimmerColor.setBackgroundColor(Color.parseColor("#" + dimmerColorValue + "FF6600"));
-                    linearDimmer.setBackgroundColor(Color.parseColor("#" + dimmerValue + "000000"));
-
-                    params.height = screenHeight();
+                    setLinears(params);
 
                     wm.updateViewLayout(linearDimmerColor, params);
                     wm.updateViewLayout(linearDimmer, params);
@@ -194,22 +186,49 @@ public class OverlayService extends Service {
                     wm = (WindowManager) getSystemService(WINDOW_SERVICE);
                     linearDimmerColor = new LinearLayout(this);
                     linearDimmer = new LinearLayout(this);
-                    linearDimmerColor.setBackgroundColor(Color.parseColor("#" + dimmerColorValue + "FF6600"));
-                    linearDimmer.setBackgroundColor(Color.parseColor("#" + dimmerValue + "000000"));
 
-                    params.height = screenHeight();
+                    setLinears(params);
 
                     wm.addView(linearDimmerColor, params);
                     wm.addView(linearDimmer, params);
                 }
 
                 saveSettings(APP_PREFERENCES_DIMMER_ON, true);
-
             }
         } catch (Exception exc) {
             Log.e(TAG, "Overlay On: " + exc);
             overlayOff();
         }
+    }
+
+    void setLinears(WindowManager.LayoutParams params) {
+        switch (temperature) {
+            case 1:
+                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 50, 20));
+                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                break;
+            case 2:
+                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 90, 40));
+                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                break;
+            case 3:
+                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 110, 50));
+                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                break;
+            case 4:
+                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 135, 60));
+                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                break;
+            case 5:
+                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 160, 75));
+                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                break;
+            default:
+                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 110, 50));
+                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                break;
+        }
+        params.height = screenHeight();
     }
 
     void overlayOff() {
@@ -266,7 +285,18 @@ public class OverlayService extends Service {
             // Prepare
             NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             // Create remote view and set bigContentView.
-            RemoteViews customView = new RemoteViews(this.getPackageName(), R.layout.notification);
+            RemoteViews customView;
+            switch (theme) {
+                case "dark":
+                    customView = new RemoteViews(this.getPackageName(), R.layout.notification_dark);
+                    break;
+                case "light":
+                    customView = new RemoteViews(this.getPackageName(), R.layout.notification_light);
+                    break;
+                default:
+                    customView = new RemoteViews(this.getPackageName(), R.layout.notification_dark);
+                    break;
+            }
 
             // Intents to BReceiver
             // Open intent
@@ -302,7 +332,7 @@ public class OverlayService extends Service {
                         .setAutoCancel(true);
             }
             // Listeners
-            customView.setOnClickPendingIntent(R.id.open_settings, pendingIntentOpen);
+            customView.setOnClickPendingIntent(R.id.settings, pendingIntentOpen);
 
             mNotificationManager.notify(ID_SERVICE, notification.build());
             startForeground(ID_SERVICE, notification.build());
@@ -390,6 +420,10 @@ public class OverlayService extends Service {
     }
 
     private void loadSettings() {
+        // UI
+        if (mSettings.contains(APP_PREFERENCES_THEME)) {
+            theme = mSettings.getString(APP_PREFERENCES_THEME, "dark");
+        }
         // Overlay
         // DimmerColor
         if (mSettings.contains(APP_PREFERENCES_DIMMER_COLOR)) {
@@ -398,6 +432,10 @@ public class OverlayService extends Service {
         // Dimmer
         if (mSettings.contains(APP_PREFERENCES_DIMMER)) {
             dimmerValue = mSettings.getInt(APP_PREFERENCES_DIMMER, 0);
+        }
+        // Temperature
+        if (mSettings.contains(APP_PREFERENCES_TEMPERATURE)) {
+            temperature = mSettings.getInt(APP_PREFERENCES_TEMPERATURE, 3);
         }
 
         // Switch
