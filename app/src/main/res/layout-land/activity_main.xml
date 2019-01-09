@@ -554,7 +554,7 @@
                     <CheckBox
                         android:id="@+id/charity"
                         android:layout_width="0dp"
-                        android:layout_height="0dp"
+                        android:layout_height="wrap_content"
                         android:alpha="0.5"
                         android:text="@string/charity_developer"
                         app:layout_constraintBottom_toBottomOf="@+id/charityIcon"

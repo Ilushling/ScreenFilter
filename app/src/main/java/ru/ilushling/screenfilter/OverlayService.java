@@ -13,12 +13,15 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.RemoteViews;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.util.Calendar;
 
@@ -57,6 +60,8 @@ public class OverlayService extends Service {
     Intent intentTimerOn, intentTimerOff;
     PendingIntent pIntentTimerOn, pIntentTimerOff;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("Not yet implemented");
@@ -66,6 +71,14 @@ public class OverlayService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
+        Bundle bundle = new Bundle();
+        bundle.putString("start_service", "service activated");
+        mFirebaseAnalytics.logEvent("start_service", bundle);
 
         mSettings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
         loadSettings();
