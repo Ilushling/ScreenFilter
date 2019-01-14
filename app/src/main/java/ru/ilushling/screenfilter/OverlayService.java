@@ -204,6 +204,11 @@ public class OverlayService extends Service {
 
                     wm.addView(linearDimmerColor, params);
                     wm.addView(linearDimmer, params);
+
+
+                    Bundle bundle = new Bundle();
+                    bundle.putString("overlay_on", "overlay_on");
+                    mFirebaseAnalytics.logEvent("overlay_on", bundle);
                 }
 
                 saveSettings(APP_PREFERENCES_DIMMER_ON, true);
@@ -251,8 +256,6 @@ public class OverlayService extends Service {
 
                 wm.removeView(linearDimmerColor);
                 wm.removeView(linearDimmer);
-
-
             } catch (Exception exc) {
                 Log.e(TAG, "Overlay Off: " + exc);
             }
@@ -261,10 +264,14 @@ public class OverlayService extends Service {
             linearDimmerColor = null;
             linearDimmer = null;
 
-            //stopForeground(true);
+            stopForeground(true);
         }
-        stopSelf();
-        //Log.e(TAG, "overlay Off");
+        //stopSelf();
+
+        Bundle bundle = new Bundle();
+        bundle.putString("overlay_off", "overlay_off");
+        mFirebaseAnalytics.logEvent("overlay_off", bundle);
+        Log.e(TAG, "overlay Off");
     }
 
     // Get screen height with navigation bar height (Because MATCH_PARENT = SCREEN_SIZE - NAV_BAR)
@@ -322,7 +329,6 @@ public class OverlayService extends Service {
             PendingIntent pendingIntentClose = PendingIntent.getBroadcast(this, 0, notificationIntentClose, PendingIntent.FLAG_UPDATE_CURRENT);
 
             // Build notification
-
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 if (mNotificationManager != null) {
                     int importance = NotificationManager.IMPORTANCE_HIGH;
@@ -330,15 +336,14 @@ public class OverlayService extends Service {
                     mNotificationManager.createNotificationChannel(notificationChannel);
                 }
                 notification = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
-                        .setContentTitle("Ночной фильтр")
+                        .setContentTitle("@string/app_name")
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentIntent(pendingIntentClose)
                         .setContent(customView)
                         .setAutoCancel(true);
-
             } else {
                 notification = new Notification.Builder(this)
-                        .setContentTitle("Ночной фильтр")
+                        .setContentTitle("@string/app_name")
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentIntent(pendingIntentClose)
                         .setContent(customView)
@@ -428,7 +433,7 @@ public class OverlayService extends Service {
         Log.e(TAG, "timer Off");
 
         if (linearDimmerColor == null && linearDimmer == null && wm == null) {
-            stopSelf();
+            overlayOff();
         }
     }
 

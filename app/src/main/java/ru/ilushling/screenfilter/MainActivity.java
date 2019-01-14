@@ -193,7 +193,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 }
 
                 if (!isChecked) {
-                    hideAd();
+                    //hideAd();
 
                     if (charityLoad != charity) {
                         Bundle bundle = new Bundle();
@@ -201,7 +201,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         mFirebaseAnalytics.logEvent("activate_charity", bundle);
                     }
                 } else {
-                    showAd();
+                    //showAd();
+
                     if (charityLoad != charity) {
                         Bundle bundle = new Bundle();
                         bundle.putString("Charity", "user deactivate app");
@@ -387,11 +388,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.settingsButton:
                 if (UISettings.getVisibility() == View.GONE) {
                     // Show
+                    showAd();
+
                     showUISettings();
                     openUISettings = true;
                     saveSettings(APP_PREFERENCES_OPEN_SETTINGS, openUISettings);
                 } else {
                     // Hide
+                    hideAd();
+
                     hideUISettings();
                     openUISettings = false;
                     saveSettings(APP_PREFERENCES_OPEN_SETTINGS, openUISettings);
@@ -835,8 +840,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 openUISettings = mSettings.getBoolean(APP_PREFERENCES_OPEN_SETTINGS, false);
                 if (openUISettings) {
                     showUISettings();
+
+                    showAd();
                 } else {
                     hideUISettings();
+
+                    hideAd();
                 }
             } catch (Exception exc) {
                 clearSetting(APP_PREFERENCES_OPEN_SETTINGS);
@@ -845,7 +854,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         } else {
             saveSettings(APP_PREFERENCES_OPEN_SETTINGS, false);
         }
-        // Advertisement
+
+        // Charity
         if (mSettings.contains(APP_PREFERENCES_CHARITY)) {
             try {
                 charity = mSettings.getBoolean(APP_PREFERENCES_CHARITY, false);
