@@ -37,7 +37,13 @@ public class BReceiver extends BroadcastReceiver {
         // Close
         if (action.equals(OverlayService.CLOSE_ACTION)) {
             // Service
-            context.stopService(new Intent(context, OverlayService.class));
+            Intent i = new Intent(context, OverlayService.class);
+            i.setAction("overlayOff");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(i);
+            } else {
+                context.startService(i);
+            }
             // Activity
             Intent it = new Intent();
             it.setAction(OverlayService.CLOSE_ACTION);
@@ -60,7 +66,7 @@ public class BReceiver extends BroadcastReceiver {
             i.setAction(APP_OVERLAY_ON);
             context.sendBroadcast(i);
 
-            Log.e(TAG, "On");
+            Log.e(TAG, "alarmTimerOn");
         }
         // OFF
         if (action == ALARM_TIMER_OFF) {
@@ -77,7 +83,7 @@ public class BReceiver extends BroadcastReceiver {
             i.setAction(APP_OVERLAY_OFF);
             context.sendBroadcast(i);
 
-            Log.e(TAG, "Off");
+            Log.e(TAG, "alarmTimerOff");
         }
 
         // Check alarm timer after reboot

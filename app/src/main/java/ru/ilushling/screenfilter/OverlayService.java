@@ -71,19 +71,15 @@ public class OverlayService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
-
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         Bundle bundle = new Bundle();
-        bundle.putString("start_service", "service activated");
+        bundle.putString("start_service", "start_service");
         mFirebaseAnalytics.logEvent("start_service", bundle);
 
         mSettings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
         loadSettings();
-
-        startNotification();
 
         intentTimerOn = createIntent(ALARM_TIMER_ON);
         pIntentTimerOn = PendingIntent.getBroadcast(this, 0, intentTimerOn, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -100,7 +96,8 @@ public class OverlayService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String action = intent.getAction();
+        String action = intent.getAction() != null ? intent.getAction() : "";
+        //Log.e(TAG, "action: " + action);
 
         switch (action) {
             case "overlayOn":
@@ -195,7 +192,7 @@ public class OverlayService extends Service {
                     wm.updateViewLayout(linearDimmer, params);
                 } else {
                     // Add
-                    //startNotification();
+                    startNotification();
                     wm = (WindowManager) getSystemService(WINDOW_SERVICE);
                     linearDimmerColor = new LinearLayout(this);
                     linearDimmer = new LinearLayout(this);
@@ -212,6 +209,8 @@ public class OverlayService extends Service {
                 }
 
                 saveSettings(APP_PREFERENCES_DIMMER_ON, true);
+
+                //Log.e(TAG, "Overlay On");
             }
         } catch (Exception exc) {
             Log.e(TAG, "Overlay On: " + exc);
@@ -266,12 +265,13 @@ public class OverlayService extends Service {
 
             stopForeground(true);
         }
-        //stopSelf();
 
         Bundle bundle = new Bundle();
         bundle.putString("overlay_off", "overlay_off");
         mFirebaseAnalytics.logEvent("overlay_off", bundle);
-        Log.e(TAG, "overlay Off");
+        //Log.e(TAG, "overlay Off");
+
+        stopSelf();
     }
 
     // Get screen height with navigation bar height (Because MATCH_PARENT = SCREEN_SIZE - NAV_BAR)
@@ -397,27 +397,28 @@ public class OverlayService extends Service {
             }
         }
         // Start timer
+        am.cancel(pIntentTimerOn);
+        am.cancel(pIntentTimerOff);
+
         am.setRepeating(AlarmManager.RTC, timeOn.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOn);
         am.setRepeating(AlarmManager.RTC, timeOff.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOff);
 
-        Log.e(TAG, "timer On");
+        //Log.e(TAG, "timer On");
+
+        timerOn = true;
+        saveSettings(APP_PREFERENCES_TIMER_ON, timerOn);
     }
 
     void turnOnDimmer() {
-        overlayOn();
         // UpdateUI
-        Intent i = new Intent(this, BReceiver.class);
-        i.setAction(ALARM_TIMER_ON);
+        Intent i = createIntent(ALARM_TIMER_ON);
         sendBroadcast(i);
     }
 
     void turnOffDimmer() {
         // UpdateUI
-        Intent i = new Intent(this, BReceiver.class);
-        i.setAction(ALARM_TIMER_OFF);
+        Intent i = createIntent(ALARM_TIMER_OFF);
         sendBroadcast(i);
-        // Turn off overlay
-        overlayOff();
     }
 
     void timerOff() {
@@ -430,11 +431,8 @@ public class OverlayService extends Service {
         boolean isWorking = (PendingIntent.getBroadcast(this, 0, createIntent(ALARM_TIMER_ON), PendingIntent.FLAG_NO_CREATE) != null);//just changed the flag
         Log.e(TAG, "alarm is " + (isWorking ? "" : "not ") + "working...");
 
-        Log.e(TAG, "timer Off");
-
-        if (linearDimmerColor == null && linearDimmer == null && wm == null) {
-            overlayOff();
-        }
+        timerOn = false;
+        saveSettings(APP_PREFERENCES_TIMER_ON, timerOn);
     }
 
     private void loadSettings() {

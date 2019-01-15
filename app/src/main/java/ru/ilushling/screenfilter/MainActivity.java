@@ -35,6 +35,9 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import static ru.ilushling.screenfilter.BReceiver.APP_OVERLAY_OFF;
+import static ru.ilushling.screenfilter.BReceiver.APP_OVERLAY_ON;
+import static ru.ilushling.screenfilter.OverlayService.CLOSE_ACTION;
 import static ru.ilushling.screenfilter.Utils.protectAppManager;
 
 
@@ -83,14 +86,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
             //Log.e(TAG, intent.getAction());
 
             switch (intent.getAction()) {
-                case BReceiver.APP_OVERLAY_ON:
+                case APP_OVERLAY_ON:
                     dimmerSwitch.setChecked(true);
                     break;
-                case BReceiver.APP_OVERLAY_OFF:
+                case APP_OVERLAY_OFF:
                     dimmerSwitch.setChecked(false);
                     break;
-                case OverlayService.CLOSE_ACTION:
-                    finish();
+                case CLOSE_ACTION:
+                    dimmerSwitch.setChecked(false);
                     break;
             }
         }
@@ -105,10 +108,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mAdView = findViewById(R.id.adView);
         MobileAds.initialize(this, "@string/banner_ad_unit_id");
 
-        // Zonds
         Bundle bundle = new Bundle();
-        bundle.putString("Open_app", "user openned app");
-        mFirebaseAnalytics.logEvent("my_custom_event_open", bundle);
+        bundle.putString("open_app", "open_app");
+        mFirebaseAnalytics.logEvent("open_app", bundle);
 
 
         temperature1_rb = findViewById(R.id.temperature1);
@@ -250,14 +252,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     timerOn = isChecked;
                     saveSettings(APP_PREFERENCES_TIMER_ON, timerOn);
                     timerService();
-
-                    if (timerOn) {
-                        timerTimeOn.setEnabled(true);
-                        timerTimeOff.setEnabled(true);
-                    } else {
-                        timerTimeOn.setEnabled(false);
-                        timerTimeOff.setEnabled(false);
-                    }
                 }
             }
 
@@ -265,9 +259,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         // Receiver
         IntentFilter filter = new IntentFilter();
-        filter.addAction(BReceiver.APP_OVERLAY_ON);
-        filter.addAction(BReceiver.APP_OVERLAY_OFF);
-        filter.addAction(OverlayService.CLOSE_ACTION);
+        filter.addAction(APP_OVERLAY_ON);
+        filter.addAction(APP_OVERLAY_OFF);
+        filter.addAction(CLOSE_ACTION);
         registerReceiver(broadcastReceiver, filter);
 
         // DimmerColor control
@@ -1048,7 +1042,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onResume();
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction(OverlayService.CLOSE_ACTION);
+        filter.addAction(CLOSE_ACTION);
         registerReceiver(broadcastReceiver, filter);
 
         Wrapper.animate().alpha(1.0f).setDuration(150);
