@@ -54,8 +54,8 @@ public class OverlayService extends Service {
     // STATIC
     public static final String OPEN_ACTION = "ru.ilushling.screenfilter.OPEN_ACTION", CLOSE_ACTION = "ru.ilushling.screenfilter.CLOSE_ACTION",
             ALARM_TIMER_ON = "ru.ilushling.screenfilter.alarmTimerOn", ALARM_TIMER_OFF = "ru.ilushling.screenfilter.alarmTimerOff";
-    public static final String NOTIFICATION_CHANNEL_ID = "9954", NOTIFICATION_CHANNEL_NAME = "screenfilter";
-    private static final int ID_SERVICE = 9954;
+    public static final String NOTIFICATION_CHANNEL_ID = "ilushling.screenfilter", NOTIFICATION_CHANNEL_NAME = "screenfilter";
+    private static final int ID_SERVICE = 99544;
 
     Intent intentTimerOn, intentTimerOff;
     PendingIntent pIntentTimerOn, pIntentTimerOff;
@@ -71,6 +71,9 @@ public class OverlayService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startNotification();
+        }
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
@@ -86,6 +89,8 @@ public class OverlayService extends Service {
 
         intentTimerOff = createIntent(ALARM_TIMER_OFF);
         pIntentTimerOff = PendingIntent.getBroadcast(this, 0, intentTimerOff, PendingIntent.FLAG_UPDATE_CURRENT);
+
+
     }
 
     Intent createIntent(String action) {
@@ -135,8 +140,6 @@ public class OverlayService extends Service {
                 break;
         }
 
-
-        //Log.e(TAG, "action: " + action);
         return START_REDELIVER_INTENT;
     }
 
@@ -331,29 +334,32 @@ public class OverlayService extends Service {
             // Build notification
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 if (mNotificationManager != null) {
-                    int importance = NotificationManager.IMPORTANCE_HIGH;
+                    int importance = NotificationManager.IMPORTANCE_MIN;
                     NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, importance);
                     mNotificationManager.createNotificationChannel(notificationChannel);
                 }
                 notification = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
-                        .setContentTitle("@string/app_name")
+                        .setContentTitle(getString(R.string.app_name))
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentIntent(pendingIntentClose)
-                        .setContent(customView)
+                        .setCustomContentView(customView)
                         .setAutoCancel(true);
             } else {
                 notification = new Notification.Builder(this)
-                        .setContentTitle("@string/app_name")
+                        .setContentTitle(getString(R.string.app_name))
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentIntent(pendingIntentClose)
                         .setContent(customView)
+                        .setPriority(Notification.PRIORITY_MAX)
                         .setAutoCancel(true);
             }
             // Listeners
             customView.setOnClickPendingIntent(R.id.settings, pendingIntentOpen);
 
-            mNotificationManager.notify(ID_SERVICE, notification.build());
-            startForeground(ID_SERVICE, notification.build());
+            if (mNotificationManager != null) {
+                mNotificationManager.notify(ID_SERVICE, notification.build());
+                startForeground(ID_SERVICE, notification.build());
+            }
         }
     }
 
@@ -397,12 +403,13 @@ public class OverlayService extends Service {
             }
         }
         // Start timer
-        am.cancel(pIntentTimerOn);
-        am.cancel(pIntentTimerOff);
+        if (am != null) {
+            am.cancel(pIntentTimerOn);
+            am.cancel(pIntentTimerOff);
 
-        am.setRepeating(AlarmManager.RTC, timeOn.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOn);
-        am.setRepeating(AlarmManager.RTC, timeOff.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOff);
-
+            am.setRepeating(AlarmManager.RTC, timeOn.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOn);
+            am.setRepeating(AlarmManager.RTC, timeOff.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntentTimerOff);
+        }
         //Log.e(TAG, "timer On");
 
         timerOn = true;
@@ -423,8 +430,11 @@ public class OverlayService extends Service {
 
     void timerOff() {
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-        am.cancel(pIntentTimerOn);
-        am.cancel(pIntentTimerOff);
+
+        if (am != null) {
+            am.cancel(pIntentTimerOn);
+            am.cancel(pIntentTimerOff);
+        }
         pIntentTimerOn.cancel();
         pIntentTimerOff.cancel();
 

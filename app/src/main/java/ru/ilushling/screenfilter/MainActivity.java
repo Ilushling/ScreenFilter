@@ -13,6 +13,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -48,7 +49,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     // Dimmer
     public static final String APP_PREFERENCES_DIMMER_ON = "dimmerOn", APP_PREFERENCES_DIMMER_COLOR = "dimmerColor",
-            APP_PREFERENCES_DIMMER = "dimmer", APP_PREFERENCES_TEMPERATURE = "temperature", APP_PREFERENCES_CHARITY = "charity", APP_PREFERENCES_OPEN_SETTINGS = "openSettings";
+            APP_PREFERENCES_DIMMER = "dimmer", APP_PREFERENCES_TEMPERATURE = "temperature", APP_PREFERENCES_CHARITY = "charity_icon", APP_PREFERENCES_OPEN_SETTINGS = "openSettings";
     boolean first = true, charity, openUISettings;
     CheckBox charity_cb;
     public static final String APP_PREFERENCES_THEME = "theme";
@@ -66,7 +67,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private FirebaseAnalytics mFirebaseAnalytics;
     // Name setting file
     public static final String APP_PREFERENCES_NAME = "PREFERENCE_FILE";
-    ImageButton settingsButton;
+    ImageButton settingsButton, soundMode;
     // Timer
     public static final String APP_PREFERENCES_TIMER_ON = "timerOn",
             APP_PREFERENCES_TIMER_HOUR_ON = "timerHourOn", APP_PREFERENCES_TIMER_MINUTE_ON = "timerMinuteOn",
@@ -85,7 +86,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void onReceive(Context context, Intent intent) {
             //Log.e(TAG, intent.getAction());
 
-            switch (intent.getAction()) {
+            switch (intent.getAction() != null ? intent.getAction() : "") {
                 case APP_OVERLAY_ON:
                     dimmerSwitch.setChecked(true);
                     break;
@@ -94,6 +95,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     break;
                 case CLOSE_ACTION:
                     dimmerSwitch.setChecked(false);
+                    break;
+                case AudioManager.RINGER_MODE_CHANGED_ACTION:
+                    getSoundMode();
                     break;
             }
         }
@@ -112,6 +116,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         bundle.putString("open_app", "open_app");
         mFirebaseAnalytics.logEvent("open_app", bundle);
 
+        showAd();
 
         temperature1_rb = findViewById(R.id.temperature1);
         temperature1_rb.setOnClickListener(this);
@@ -216,6 +221,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
         });
 
+        // Sound Mode
+        soundMode = findViewById(R.id.soundMode);
+        getSoundMode();
+        soundMode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Utils utils = new Utils(getApplicationContext());
+                utils.setSoundMode();
+            }
+        });
 
         // Settings
         mSettings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
@@ -230,16 +245,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (checkAllows()) {
-                    dimmerOn = isChecked;
-                    saveSettings(APP_PREFERENCES_DIMMER_ON, dimmerOn);
-
-                    if (dimmerOn) {
-                        overlayService();
-                    } else {
-                        overlayOff();
-                    }
-                }
+                dimmerOn = isChecked;
+                saveSettings(APP_PREFERENCES_DIMMER_ON, dimmerOn);
+                overlayService();
             }
         });
 
@@ -262,6 +270,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         filter.addAction(APP_OVERLAY_ON);
         filter.addAction(APP_OVERLAY_OFF);
         filter.addAction(CLOSE_ACTION);
+        filter.addAction(AudioManager.RINGER_MODE_CHANGED_ACTION);
         registerReceiver(broadcastReceiver, filter);
 
         // DimmerColor control
@@ -362,10 +371,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     private void overlayService() {
-        if (dimmerColorValue == 0 && dimmerValue == 0) {
-            overlayOff();
-        } else if (dimmerOn && checkAllows() && !first) {
-            overlayOn();
+        Log.e(TAG, "overlayService by MainActivity");
+        if (!first) {
+            if (dimmerColorValue == 0 && dimmerValue == 0 || !dimmerOn) {
+                overlayOff();
+            } else if (checkAllows()) {
+                overlayOn();
+            }
         }
     }
 
@@ -382,19 +394,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.settingsButton:
                 if (UISettings.getVisibility() == View.GONE) {
                     // Show
-                    showAd();
-
                     showUISettings();
                     openUISettings = true;
-                    saveSettings(APP_PREFERENCES_OPEN_SETTINGS, openUISettings);
                 } else {
                     // Hide
-                    hideAd();
-
                     hideUISettings();
                     openUISettings = false;
-                    saveSettings(APP_PREFERENCES_OPEN_SETTINGS, openUISettings);
                 }
+                saveSettings(APP_PREFERENCES_OPEN_SETTINGS, openUISettings);
                 break;
             case R.id.temperature1:
                 saveSettings(APP_PREFERENCES_TEMPERATURE, 1);
@@ -835,11 +842,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 if (openUISettings) {
                     showUISettings();
 
-                    showAd();
+                    //showAd();
                 } else {
                     hideUISettings();
 
-                    hideAd();
+                    //hideAd();
                 }
             } catch (Exception exc) {
                 clearSetting(APP_PREFERENCES_OPEN_SETTINGS);
@@ -922,9 +929,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         UISettings.animate().alpha(1.0f).setDuration(150);
 
         // ADS
-        if (charity) {
-            showAd();
+        /*
+        if (charity_icon) {
+            //showAd();
         }
+        */
     }
 
     void hideUISettings() {
@@ -937,7 +946,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 UISettings.setVisibility(View.GONE);
                 // Clear listener
                 UISettings.animate().setListener(null);
-                hideAd();
+                //hideAd();
             }
         });
     }
@@ -988,6 +997,22 @@ public class MainActivity extends Activity implements View.OnClickListener {
     void hideAd() {
         mAdView.destroy();
         mAdView.setVisibility(View.GONE);
+    }
+
+    // Sound Mode
+    void getSoundMode() {
+        Utils utils = new Utils(this);
+        switch (utils.getSoundMode()) {
+            case 0:
+                soundMode.setImageResource(R.drawable.sound_off);
+                break;
+            case 1:
+                soundMode.setImageResource(R.drawable.sound_vibration);
+                break;
+            case 2:
+                soundMode.setImageResource(R.drawable.sound_on);
+                break;
+        }
     }
 
     // Alternative permission

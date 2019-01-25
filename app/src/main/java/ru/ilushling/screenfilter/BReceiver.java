@@ -22,7 +22,8 @@ public class BReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
+        String action = intent.getAction() != null ? intent.getAction() : "";
+        //Log.e(TAG, action);
 
         // Open Activity
         if (action.equals(OverlayService.OPEN_ACTION)) {
@@ -52,7 +53,7 @@ public class BReceiver extends BroadcastReceiver {
 
         // Timer
         // ON
-        if (action == ALARM_TIMER_ON) {
+        if (action.equals(ALARM_TIMER_ON)) {
             // Service
             Intent i = new Intent(context, OverlayService.class);
             i.setAction("alarmTimerOn");
@@ -69,7 +70,7 @@ public class BReceiver extends BroadcastReceiver {
             Log.e(TAG, "alarmTimerOn");
         }
         // OFF
-        if (action == ALARM_TIMER_OFF) {
+        if (action.equals(ALARM_TIMER_OFF)) {
             // Service
             Intent i = new Intent(context, OverlayService.class);
             i.setAction("alarmTimerOff");

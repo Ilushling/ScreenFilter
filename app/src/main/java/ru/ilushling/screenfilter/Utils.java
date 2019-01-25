@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -20,6 +21,11 @@ import java.util.List;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_NAME;
 
 public class Utils {
+    private AudioManager audioManager;
+
+    Utils(Context context) {
+        audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+    }
 
     // [START Battery protection]
     public static void protectAppManager(final Context context) {
@@ -89,4 +95,22 @@ public class Utils {
         return list.size() > 0;
     }
     // [END Battery protection]
+
+    int getSoundMode() {
+        return audioManager.getRingerMode();
+    }
+
+    void setSoundMode() {
+        switch (getSoundMode()) {
+            case 0:
+                audioManager.setRingerMode(1);
+                break;
+            case 1:
+                audioManager.setRingerMode(2);
+                break;
+            case 2:
+                audioManager.setRingerMode(0);
+                break;
+        }
+    }
 }
