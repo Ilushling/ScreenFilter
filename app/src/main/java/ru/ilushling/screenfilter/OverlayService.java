@@ -78,7 +78,6 @@ public class OverlayService extends Service {
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         Bundle bundle = new Bundle();
-        bundle.putString("start_service", "start_service");
         mFirebaseAnalytics.logEvent("start_service", bundle);
 
         mSettings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
@@ -204,11 +203,6 @@ public class OverlayService extends Service {
 
                     wm.addView(linearDimmerColor, params);
                     wm.addView(linearDimmer, params);
-
-
-                    Bundle bundle = new Bundle();
-                    bundle.putString("overlay_on", "overlay_on");
-                    mFirebaseAnalytics.logEvent("overlay_on", bundle);
                 }
 
                 saveSettings(APP_PREFERENCES_DIMMER_ON, true);
@@ -268,10 +262,6 @@ public class OverlayService extends Service {
 
             stopForeground(true);
         }
-
-        Bundle bundle = new Bundle();
-        bundle.putString("overlay_off", "overlay_off");
-        mFirebaseAnalytics.logEvent("overlay_off", bundle);
         //Log.e(TAG, "overlay Off");
 
         stopSelf();
@@ -315,6 +305,9 @@ public class OverlayService extends Service {
                     break;
                 case "light":
                     customView = new RemoteViews(this.getPackageName(), R.layout.notification_light);
+                    break;
+                case "transparent":
+                    customView = new RemoteViews(this.getPackageName(), R.layout.notification_transparent);
                     break;
                 default:
                     customView = new RemoteViews(this.getPackageName(), R.layout.notification_dark);

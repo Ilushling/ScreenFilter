@@ -1,6 +1,7 @@
 package ru.ilushling.screenfilter;
 
 import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.content.pm.ResolveInfo;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -21,14 +23,22 @@ import java.util.List;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_NAME;
 
 public class Utils {
+    NotificationManager notificationManager;
+    FirebaseAnalytics mFirebaseAnalytics;
     private AudioManager audioManager;
+    private Context context;
+    private String TAG = "Utils";
 
     Utils(Context context) {
+        this.context = context;
         audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
     }
 
     // [START Battery protection]
-    public static void protectAppManager(final Context context) {
+    void protectAppManager() {
         SharedPreferences settings = context.getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
         boolean skipMessage = settings.getBoolean("skipProtectedAppCheck", false);
 
@@ -96,21 +106,44 @@ public class Utils {
     }
     // [END Battery protection]
 
+    // [START Sound Mode]
     int getSoundMode() {
-        return audioManager.getRingerMode();
+        try {
+            return audioManager.getRingerMode();
+        } catch (Exception exc) {
+            Log.e(TAG, "" + exc);
+            Bundle bundle = new Bundle();
+            bundle.putString("error", "" + exc);
+            mFirebaseAnalytics.logEvent("audioMangerErrorGetRingerMode", bundle);
+            return 0;
+        }
     }
 
     void setSoundMode() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!notificationManager.isNotificationPolicyAccessGranted()) {
+                Intent i = new Intent();
+                i.setAction(MainActivity.CHECK_AUDIO_PERMISSION);
+                context.sendBroadcast(i);
+                return;
+            }
+        }
+
         switch (getSoundMode()) {
-            case 0:
-                audioManager.setRingerMode(1);
+            case AudioManager.RINGER_MODE_SILENT:
+                audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
+                if (getSoundMode() == AudioManager.RINGER_MODE_SILENT) {
+                    audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+                }
                 break;
-            case 1:
-                audioManager.setRingerMode(2);
+            case AudioManager.RINGER_MODE_VIBRATE:
+                audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
                 break;
-            case 2:
-                audioManager.setRingerMode(0);
+            case AudioManager.RINGER_MODE_NORMAL:
+                audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
                 break;
         }
     }
+    // [END Sound Mode]
+
 }

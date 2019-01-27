@@ -28,7 +28,7 @@ android {
         applicationId "ru.ilushling.screenfilter"
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 33
+        versionCode 35
         versionName "1.0"
     }
     buildTypes {
@@ -53,5 +53,3 @@ dependencies {
     implementation 'com.google.firebase:firebase-ads:17.1.2'
     implementation 'com.google.android.gms:play-services-ads:17.1.2'
 }
-
-apply plugin: 'com.google.gms.google-services'

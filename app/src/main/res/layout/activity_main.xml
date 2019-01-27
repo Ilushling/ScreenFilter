@@ -76,6 +76,7 @@
                         android:id="@+id/dimmerSwitch"
                         android:layout_width="wrap_content"
                         android:layout_height="0dp"
+                        android:layout_marginRight="8dp"
                         android:layout_marginEnd="8dp"
                         android:checked="false"
                         android:contentDescription="switch"
@@ -284,7 +285,6 @@
                         android:id="@+id/timerTimeOn"
                         android:layout_width="wrap_content"
                         android:layout_height="0dp"
-                        android:enabled="false"
                         android:fontFamily="sans-serif-light"
                         android:gravity="center"
                         android:text="ON 22:00"
@@ -310,7 +310,6 @@
                         android:id="@+id/timerTimeOff"
                         android:layout_width="wrap_content"
                         android:layout_height="0dp"
-                        android:enabled="false"
                         android:fontFamily="sans-serif-light"
                         android:gravity="center"
                         android:text="OFF 7:00"
@@ -318,8 +317,7 @@
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toStartOf="@+id/timerSwitch"
                         app:layout_constraintStart_toEndOf="@+id/dividerTimerVertical"
-                        app:layout_constraintTop_toTopOf="parent"
-                        />
+                        app:layout_constraintTop_toTopOf="parent"/>
 
                     <Switch
                         android:id="@+id/timerSwitch"
@@ -497,9 +495,11 @@
                             android:button="@null"
                             android:checked="true"
                             android:contentDescription="@string/dark"
+                            android:fontFamily="sans-serif-light"
                             android:gravity="center_vertical|center_horizontal"
                             android:text="@string/dark"
-                            android:textColor="@drawable/radiobutton_theme_text_dark"/>
+                            android:textColor="@drawable/radiobutton_theme_text_dark"
+                            android:textSize="14sp"/>
 
                         <RadioButton
                             android:id="@+id/lightTheme"
@@ -510,9 +510,26 @@
                             android:button="@null"
                             android:checked="false"
                             android:contentDescription="@string/light"
+                            android:fontFamily="sans-serif-light"
                             android:gravity="center_vertical|center_horizontal"
                             android:text="@string/light"
-                            android:textColor="@drawable/radiobutton_theme_text_light"/>
+                            android:textColor="@drawable/radiobutton_theme_text_light"
+                            android:textSize="14sp"/>
+
+                        <RadioButton
+                            android:id="@+id/transparentTheme"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@drawable/radiobutton_light"
+                            android:button="@null"
+                            android:checked="false"
+                            android:contentDescription="@string/transparent"
+                            android:fontFamily="sans-serif-light"
+                            android:gravity="center_vertical|center_horizontal"
+                            android:text="@string/transparent"
+                            android:textColor="@drawable/radiobutton_theme_text_light"
+                            android:textSize="14sp"/>
                     </RadioGroup>
 
                     <ImageButton
