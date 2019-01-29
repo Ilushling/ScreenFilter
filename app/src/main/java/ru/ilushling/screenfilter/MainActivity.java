@@ -56,6 +56,30 @@ public class MainActivity extends Activity implements View.OnClickListener {
     boolean first = true, charity, openUISettings;
     CheckBox charity_cb;
     public static final String APP_PREFERENCES_THEME = "theme";
+    protected TextView timerTimeOn, timerTimeOff;
+    SeekBar dimmer, dimmerColor;
+    // UI
+    ConstraintLayout UIMain, Wrapper, Wrapper1, UISettings;
+    Utils utils;
+    TextView dimmerColor_status, dimmer_status;
+    private AdView mAdView;
+
+    // Save Settings
+    SharedPreferences mSettings;
+    private FirebaseAnalytics mFirebaseAnalytics;
+    // Name setting file
+    public static final String APP_PREFERENCES_NAME = "PREFERENCE_FILE";
+    ImageButton settingsButton, soundMode;
+    Switch dimmerSwitch;
+    // Variables
+    String theme;
+    private int dimmerColorValue, dimmerValue;
+    boolean dimmerOn, timerOn;
+    int temperature;
+    protected String timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff;
+    Switch timerSwitch;
+    RadioButton temperature1_rb, temperature2_rb, temperature3_rb, temperature4_rb, temperature5_rb, darkTheme, lightTheme, transparentTheme;
+
     // Listener for dialog
     public DialogInterface.OnClickListener listenerOverlay = new DialogInterface.OnClickListener() {
 
@@ -100,46 +124,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
         }
     };
-    protected TextView timerTimeOn, timerTimeOff;
-    SeekBar dimmer, dimmerColor;
-    // UI
-    ConstraintLayout UIMain, Wrapper, Wrapper1, UISettings;
-    Utils utils;
-    TextView dimmerColor_status, dimmer_status;
-    private AdView mAdView;
-
-    // Save Settings
-    SharedPreferences mSettings;
-    private FirebaseAnalytics mFirebaseAnalytics;
-    // Name setting file
-    public static final String APP_PREFERENCES_NAME = "PREFERENCE_FILE";
-    ImageButton settingsButton, soundMode;
-    Switch dimmerSwitch;
-    // Variables
-    String theme;
-    private int dimmerColorValue, dimmerValue;
-    boolean dimmerOn, timerOn;
-    int temperature;
-    protected String timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff;
-    Switch timerSwitch;
-    RadioButton temperature1_rb, temperature2_rb, temperature3_rb, temperature4_rb, temperature5_rb, darkTheme, lightTheme, transparentTheme;
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-        loadSettings();
-    }
-
-    private void overlayService() {
-        if (!first) {
-            if (dimmerColorValue == 0 && dimmerValue == 0 || !dimmerOn) {
-                overlayOff();
-            } else if (checkAllows()) {
-                overlayOn();
-            }
-        }
-    }
     // Close
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -166,161 +150,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     };
 
-    void overlayOff() {
-        Intent intent = new Intent(this, OverlayService.class);
-        intent.setAction("overlayOff");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent);
-        } else {
-            startService(intent);
-        }
-    }
-
-    // Load values from save
-
-    void overlayOn() {
-        Intent intent = new Intent(this, OverlayService.class);
-        intent.setAction("overlayOn");
-        intent.putExtra("theme", theme);
-        intent.putExtra("dimmerColorValue", dimmerColorValue);
-        intent.putExtra("dimmerValue", dimmerValue);
-        intent.putExtra("temperature", temperature);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent);
-        } else {
-            startService(intent);
-        }
-    }
-
-    // Save values
-    private void saveSettings(String key, int value) {
-        // Prepare for save
-        SharedPreferences.Editor editor = mSettings.edit();
-        // Edit Variables
-        editor.putInt(key, value);
-        // Save
-        editor.apply();
-    }
-
-    private void saveSettings(String key, String value) {
-        // Prepare for save
-        SharedPreferences.Editor editor = mSettings.edit();
-        // Edit Variables
-        editor.putString(key, value);
-        // Save
-        editor.apply();
-    }
-
-    private void saveSettings(String key, boolean value) {
-        // Prepare for save
-        SharedPreferences.Editor editor = mSettings.edit();
-        // Edit Variables
-        editor.putBoolean(key, value);
-        // Save
-        editor.apply();
-    }
-
-    private void clearSetting(String key) {
-        // Prepare for save
-        SharedPreferences.Editor editor = mSettings.edit();
-        // Edit Variables
-        editor.remove(key);
-        // Save
-        editor.apply();
-    }
-
-    // [START select timer]
-    void pickTimer(final String action) {
-        int hour = 0, minute = 0;
-        switch (action) {
-            case "timerOn":
-                hour = Integer.parseInt(timerHourOn);
-                minute = Integer.parseInt(timerMinuteOn);
-                break;
-            case "timerOff":
-                hour = Integer.parseInt(timerHourOff);
-                minute = Integer.parseInt(timerMinuteOff);
-                break;
-        }
-
-        TimePickerDialog timePickerDialog = new TimePickerDialog(MainActivity.this, TimePickerDialog.THEME_DEVICE_DEFAULT_DARK, new TimePickerDialog.OnTimeSetListener() {
-            @Override
-            public void onTimeSet(TimePicker view, int hour, int minute) {
-                switch (action) {
-                    case "timerOn":
-                        timerHourOn = String.valueOf(hour);
-                        timerMinuteOn = String.valueOf(minute);
-
-                        saveSettings(APP_PREFERENCES_TIMER_HOUR_ON, timerHourOn);
-                        saveSettings(APP_PREFERENCES_TIMER_MINUTE_ON, timerMinuteOn);
-
-                        // format minutes to 00
-                        StringBuilder sb = new StringBuilder();
-                        sb.append(timerMinuteOn);
-                        if (sb.length() < 2) {
-                            sb.insert(0, '0'); // pad with leading zero if needed
-                        }
-                        timerMinuteOn = sb.toString();
-
-                        // Update UI
-                        timerTimeOn.setText("ON " + timerHourOn + ":" + timerMinuteOn);
-                        break;
-                    case "timerOff":
-                        timerHourOff = String.valueOf(hour);
-                        timerMinuteOff = String.valueOf(minute);
-
-                        saveSettings(APP_PREFERENCES_TIMER_HOUR_OFF, timerHourOff);
-                        saveSettings(APP_PREFERENCES_TIMER_MINUTE_OFF, timerMinuteOff);
-
-                        // format minutes to 00
-                        sb = new StringBuilder();
-                        sb.append(timerMinuteOff);
-                        if (sb.length() < 2) {
-                            sb.insert(0, '0'); // pad with leading zero if needed
-                        }
-                        timerMinuteOff = sb.toString();
-
-                        timerTimeOff.setText("OFF " + timerHourOff + ":" + timerMinuteOff);
-                        break;
-                }
-
-                timerService();
-            }
-        }, hour, minute, true);
-        timePickerDialog.show();
-    }
-    // [END select timer]
-
-    // Run Alarm in service
-    public void timerService() {
-        Intent intent = new Intent(this, OverlayService.class);
-
-        if (timerOn && timerHourOn != null && timerMinuteOn != null && timerHourOff != null && timerMinuteOff != null) {
-            // Timer on
-            intent.setAction("timerOn");
-            intent.putExtra("timerHourOn", timerHourOn);
-            intent.putExtra("timerMinuteOn", timerMinuteOn);
-            intent.putExtra("timerHourOff", timerHourOff);
-            intent.putExtra("timerMinuteOff", timerMinuteOff);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent);
-            } else {
-                startService(intent);
-            }
-        } else if (!timerOn) {
-            // Timer off
-            intent.setAction("timerOff");
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent);
-            } else {
-                startService(intent);
-            }
-        }
-    }
-
-    // [START Permissions]
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -328,7 +157,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         mAdView = findViewById(R.id.adView);
-        MobileAds.initialize(this, "@string/banner_ad_unit_id");
+        MobileAds.initialize(this, getString(R.string.ad_app_id));
 
         Bundle bundle = new Bundle();
         mFirebaseAnalytics.logEvent("open_app", bundle);
@@ -546,6 +375,87 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 overlayService();
             }
         });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        loadSettings();
+    }
+
+    // Load values from save
+
+    private void overlayService() {
+        if (!first) {
+            if (dimmerColorValue == 0 && dimmerValue == 0 || !dimmerOn) {
+                overlayOff();
+            } else if (checkAllows()) {
+                overlayOn();
+            }
+        }
+    }
+
+    void overlayOff() {
+        Intent intent = new Intent(this, OverlayService.class);
+        intent.setAction("overlayOff");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
+    }
+
+    void overlayOn() {
+        Intent intent = new Intent(this, OverlayService.class);
+        intent.setAction("overlayOn");
+        intent.putExtra("theme", theme);
+        intent.putExtra("dimmerColorValue", dimmerColorValue);
+        intent.putExtra("dimmerValue", dimmerValue);
+        intent.putExtra("temperature", temperature);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
+    }
+
+    // Save values
+    private void saveSettings(String key, int value) {
+        // Prepare for save
+        SharedPreferences.Editor editor = mSettings.edit();
+        // Edit Variables
+        editor.putInt(key, value);
+        // Save
+        editor.apply();
+    }
+
+    private void saveSettings(String key, String value) {
+        // Prepare for save
+        SharedPreferences.Editor editor = mSettings.edit();
+        // Edit Variables
+        editor.putString(key, value);
+        // Save
+        editor.apply();
+    }
+
+    private void saveSettings(String key, boolean value) {
+        // Prepare for save
+        SharedPreferences.Editor editor = mSettings.edit();
+        // Edit Variables
+        editor.putBoolean(key, value);
+        // Save
+        editor.apply();
+    }
+    // [END select timer]
+
+    private void clearSetting(String key) {
+        // Prepare for save
+        SharedPreferences.Editor editor = mSettings.edit();
+        // Edit Variables
+        editor.remove(key);
+        // Save
+        editor.apply();
     }
 
     void showUISettings() {
@@ -1077,6 +987,95 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
         }
         return true;
+    }
+
+    // [START select timer]
+    void pickTimer(final String action) {
+        int hour = 0, minute = 0;
+        switch (action) {
+            case "timerOn":
+                hour = Integer.parseInt(timerHourOn);
+                minute = Integer.parseInt(timerMinuteOn);
+                break;
+            case "timerOff":
+                hour = Integer.parseInt(timerHourOff);
+                minute = Integer.parseInt(timerMinuteOff);
+                break;
+        }
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(MainActivity.this, TimePickerDialog.THEME_DEVICE_DEFAULT_DARK, new TimePickerDialog.OnTimeSetListener() {
+            @Override
+            public void onTimeSet(TimePicker view, int hour, int minute) {
+                switch (action) {
+                    case "timerOn":
+                        timerHourOn = String.valueOf(hour);
+                        timerMinuteOn = String.valueOf(minute);
+
+                        saveSettings(APP_PREFERENCES_TIMER_HOUR_ON, timerHourOn);
+                        saveSettings(APP_PREFERENCES_TIMER_MINUTE_ON, timerMinuteOn);
+
+                        // format minutes to 00
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(timerMinuteOn);
+                        if (sb.length() < 2) {
+                            sb.insert(0, '0'); // pad with leading zero if needed
+                        }
+                        timerMinuteOn = sb.toString();
+
+                        // Update UI
+                        timerTimeOn.setText("ON " + timerHourOn + ":" + timerMinuteOn);
+                        break;
+                    case "timerOff":
+                        timerHourOff = String.valueOf(hour);
+                        timerMinuteOff = String.valueOf(minute);
+
+                        saveSettings(APP_PREFERENCES_TIMER_HOUR_OFF, timerHourOff);
+                        saveSettings(APP_PREFERENCES_TIMER_MINUTE_OFF, timerMinuteOff);
+
+                        // format minutes to 00
+                        sb = new StringBuilder();
+                        sb.append(timerMinuteOff);
+                        if (sb.length() < 2) {
+                            sb.insert(0, '0'); // pad with leading zero if needed
+                        }
+                        timerMinuteOff = sb.toString();
+
+                        timerTimeOff.setText("OFF " + timerHourOff + ":" + timerMinuteOff);
+                        break;
+                }
+
+                timerService();
+            }
+        }, hour, minute, true);
+        timePickerDialog.show();
+    }
+
+    // Run Alarm in service
+    public void timerService() {
+        Intent intent = new Intent(this, OverlayService.class);
+
+        if (timerOn && timerHourOn != null && timerMinuteOn != null && timerHourOff != null && timerMinuteOff != null) {
+            // Timer on
+            intent.setAction("timerOn");
+            intent.putExtra("timerHourOn", timerHourOn);
+            intent.putExtra("timerMinuteOn", timerMinuteOn);
+            intent.putExtra("timerHourOff", timerHourOff);
+            intent.putExtra("timerMinuteOff", timerMinuteOff);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent);
+            } else {
+                startService(intent);
+            }
+        } else if (!timerOn) {
+            // Timer off
+            intent.setAction("timerOff");
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent);
+            } else {
+                startService(intent);
+            }
+        }
     }
 
     // Dialog for permission
