@@ -138,9 +138,15 @@ public class Utils {
                 break;
             case AudioManager.RINGER_MODE_VIBRATE:
                 audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+                if (getSoundMode() == AudioManager.RINGER_MODE_VIBRATE) {
+                    audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+                }
                 break;
             case AudioManager.RINGER_MODE_NORMAL:
                 audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+                if (getSoundMode() == AudioManager.RINGER_MODE_NORMAL) {
+                    audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
+                }
                 break;
         }
     }

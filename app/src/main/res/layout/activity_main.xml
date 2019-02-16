@@ -512,7 +512,8 @@
                             android:gravity="center_vertical|center_horizontal"
                             android:text="@string/light"
                             android:textColor="@drawable/radiobutton_theme_text_light"
-                            android:textSize="14sp"/>
+                            android:textSize="14sp"
+                            android:visibility="gone"/>
 
                         <RadioButton
                             android:id="@+id/transparentTheme"

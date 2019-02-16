@@ -8,6 +8,6 @@
     <string name="restriction_sound">Предоставьте приложению доступ к звуку для работы</string>
     <string name="dark">Темная</string>
     <string name="light">Светлая</string>
-    <string name="transparent">Прозрачная</string>
+    <string name="transparent">Обычная</string>
     <string name="charity_developer">Благодарность разработчику</string>
 </resources>

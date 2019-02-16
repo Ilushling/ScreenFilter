@@ -88,7 +88,7 @@ public class BReceiver extends BroadcastReceiver {
         }
 
         // Check alarm timer after reboot
-        if (intent.getAction().equalsIgnoreCase(Intent.ACTION_BOOT_COMPLETED)) {
+        if (action.equalsIgnoreCase(Intent.ACTION_BOOT_COMPLETED)) {
             Intent serviceIntent = new Intent(context, OverlayService.class);
             serviceIntent.setAction("timerOn");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

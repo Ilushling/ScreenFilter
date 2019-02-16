@@ -18,6 +18,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.util.Log;
 import android.view.View;
@@ -34,7 +35,11 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 
 import static ru.ilushling.screenfilter.BReceiver.APP_OVERLAY_OFF;
 import static ru.ilushling.screenfilter.BReceiver.APP_OVERLAY_ON;
@@ -67,19 +72,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
     // Save Settings
     SharedPreferences mSettings;
     private FirebaseAnalytics mFirebaseAnalytics;
-    // Name setting file
-    public static final String APP_PREFERENCES_NAME = "PREFERENCE_FILE";
-    ImageButton settingsButton, soundMode;
-    Switch dimmerSwitch;
-    // Variables
-    String theme;
-    private int dimmerColorValue, dimmerValue;
-    boolean dimmerOn, timerOn;
-    int temperature;
-    protected String timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff;
-    Switch timerSwitch;
-    RadioButton temperature1_rb, temperature2_rb, temperature3_rb, temperature4_rb, temperature5_rb, darkTheme, lightTheme, transparentTheme;
-
     // Listener for dialog
     public DialogInterface.OnClickListener listenerOverlay = new DialogInterface.OnClickListener() {
 
@@ -95,13 +87,27 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     break;
                 case BUTTON_POSITIVE:
                     // int which = -1
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+                    Intent intent = null;
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+                    }
                     startActivityForResult(intent, 1);
                     dialog.dismiss();
                     break;
             }
         }
     };
+    // Name setting file
+    public static final String APP_PREFERENCES_NAME = "PREFERENCE_FILE";
+    ImageButton settingsButton, soundMode;
+    Switch dimmerSwitch;
+    // Variables
+    String theme;
+    private int dimmerColorValue, dimmerValue;
+    boolean dimmerOn, timerOn;
+    int temperature;
+    protected String timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff;
+    Switch timerSwitch;
     // Listener for dialog
     public DialogInterface.OnClickListener listenerSound = new DialogInterface.OnClickListener() {
 
@@ -117,13 +123,19 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     break;
                 case BUTTON_POSITIVE:
                     // int which = -1
-                    Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+                    Intent intent = null;
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+                    }
                     startActivityForResult(intent, 2);
                     dialog.dismiss();
                     break;
             }
         }
     };
+    //RadioButton lightTheme;
+    RadioButton temperature1_rb, temperature2_rb, temperature3_rb, temperature4_rb, temperature5_rb, darkTheme, transparentTheme;
+    private FirebaseRemoteConfig mFirebaseRemoteConfig;
     // Close
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -162,7 +174,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
         Bundle bundle = new Bundle();
         mFirebaseAnalytics.logEvent("open_app", bundle);
 
-        showAd();
+        // ADS
+        // Remote settings
+        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+        FirebaseRemoteConfigSettings remoteConfigSettings = new FirebaseRemoteConfigSettings.Builder()
+                .setDeveloperModeEnabled(false)
+                .build();
+        mFirebaseRemoteConfig.setConfigSettings(remoteConfigSettings);
+        mFirebaseRemoteConfig.setDefaults(R.xml.remote_config_defaults);
+        fetchRemoteConfig();
+        boolean enableAd = mFirebaseRemoteConfig.getBoolean("enableAd");
+
+        if (enableAd) {
+            showAd();
+        }
+        //Log.e(TAG, "enableAd: " + enableAd);
 
         temperature1_rb = findViewById(R.id.temperature1);
         temperature1_rb.setOnClickListener(this);
@@ -227,8 +253,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
         // Theme
         darkTheme = findViewById(R.id.darkTheme);
         darkTheme.setOnClickListener(this);
+        /*
         lightTheme = findViewById(R.id.lightTheme);
         lightTheme.setOnClickListener(this);
+        */
         transparentTheme = findViewById(R.id.transparentTheme);
         transparentTheme.setOnClickListener(this);
 
@@ -600,6 +628,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     }
                 }
                 break;
+                /*
             case R.id.lightTheme:
                 if (!theme.equals("light")) {
                     theme = "light";
@@ -619,6 +648,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     }
                 }
                 break;
+                */
             case R.id.transparentTheme:
                 if (!theme.equals("transparent")) {
                     theme = "transparent";
@@ -661,14 +691,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     case "dark":
                         darkTheme.setChecked(true);
                         break;
+                        /*
                     case "light":
                         lightTheme.setChecked(true);
                         break;
+                        */
                     case "transparent":
                         transparentTheme.setChecked(true);
                         break;
                     default:
                         darkTheme.setChecked(true);
+                        clearSetting(APP_PREFERENCES_THEME);
+                        saveSettings(APP_PREFERENCES_THEME, "dark");
                         break;
                 }
 
@@ -1077,6 +1111,27 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
         }
     }
+
+    void fetchRemoteConfig() {
+        // cache expiration in seconds
+        int cacheExpiration = 30;
+        //expire the cache immediately for development mode.
+        if (mFirebaseRemoteConfig.getInfo().getConfigSettings().isDeveloperModeEnabled()) {
+            cacheExpiration = 0;
+        }
+        mFirebaseRemoteConfig.fetch(cacheExpiration)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            // After config data is successfully fetched, it must be activated before newly fetched
+                            // values are returned.
+                            mFirebaseRemoteConfig.activateFetched();
+                        }
+                    }
+                });
+    }
+
 
     // Dialog for permission
     public void showPermission(String permission, String message) {

@@ -88,8 +88,6 @@ public class OverlayService extends Service {
 
         intentTimerOff = createIntent(ALARM_TIMER_OFF);
         pIntentTimerOff = PendingIntent.getBroadcast(this, 0, intentTimerOff, PendingIntent.FLAG_UPDATE_CURRENT);
-
-
     }
 
     Intent createIntent(String action) {
@@ -303,9 +301,11 @@ public class OverlayService extends Service {
                 case "dark":
                     customView = new RemoteViews(this.getPackageName(), R.layout.notification_dark);
                     break;
+                    /*
                 case "light":
                     customView = new RemoteViews(this.getPackageName(), R.layout.notification_light);
                     break;
+                    */
                 case "transparent":
                     customView = new RemoteViews(this.getPackageName(), R.layout.notification_transparent);
                     break;
@@ -316,12 +316,10 @@ public class OverlayService extends Service {
 
             // Intents to BReceiver
             // Open intent
-            Intent notificationIntentOpen = new Intent(this, BReceiver.class);
-            notificationIntentOpen.setAction(OPEN_ACTION);
+            Intent notificationIntentOpen = new Intent(this, BReceiver.class).setAction(OPEN_ACTION);
             PendingIntent pendingIntentOpen = PendingIntent.getBroadcast(this, 0, notificationIntentOpen, PendingIntent.FLAG_UPDATE_CURRENT);
             // Close intent
-            Intent notificationIntentClose = new Intent(this, BReceiver.class);
-            notificationIntentClose.setAction(CLOSE_ACTION);
+            Intent notificationIntentClose = new Intent(this, BReceiver.class).setAction(CLOSE_ACTION);
             PendingIntent pendingIntentClose = PendingIntent.getBroadcast(this, 0, notificationIntentClose, PendingIntent.FLAG_UPDATE_CURRENT);
 
             // Build notification

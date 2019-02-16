@@ -13,6 +13,6 @@
     <string name="restriction_sound">Allow access app to use sound (Change sound)</string>
     <string name="dark">Dark</string>
     <string name="light">Light</string>
-    <string name="transparent">Clear</string>
+    <string name="transparent">Default</string>
     <string name="charity_developer">Thanks to the developer</string>
 </resources>
