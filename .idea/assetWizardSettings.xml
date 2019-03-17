@@ -33,9 +33,10 @@
                         </option>
                         <option name="values">
                           <map>
+                            <entry key="assetSourceType" value="FILE" />
                             <entry key="color" value="ffffff" />
-                            <entry key="outputName" value="sound_off" />
-                            <entry key="sourceFile" value="C:\Users\Polo" />
+                            <entry key="outputName" value="policy" />
+                            <entry key="sourceFile" value="C:\Users\Polo\Downloads\Policy.svg" />
                           </map>
                         </option>
                       </PersistentState>

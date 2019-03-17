@@ -10,4 +10,5 @@
     <string name="light">Светлая</string>
     <string name="transparent">Обычная</string>
     <string name="charity_developer">Благодарность разработчику</string>
+    <string name="privacy_policy">Политика конфиденциальности</string>
 </resources>

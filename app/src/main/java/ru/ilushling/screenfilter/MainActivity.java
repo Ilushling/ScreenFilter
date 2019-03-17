@@ -69,6 +69,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
     TextView dimmerColor_status, dimmer_status;
     private AdView mAdView;
 
+    // Policy
+    ImageButton policyButton;
+    TextView policyText;
+
     // Save Settings
     SharedPreferences mSettings;
     private FirebaseAnalytics mFirebaseAnalytics;
@@ -259,6 +263,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         */
         transparentTheme = findViewById(R.id.transparentTheme);
         transparentTheme.setOnClickListener(this);
+
+        // Policy
+        policyButton = findViewById(R.id.policyButton);
+        policyButton.setOnClickListener(this);
+        policyText = findViewById(R.id.policyText);
+        policyText.setOnClickListener(this);
 
         // Charity
         charity_cb = findViewById(R.id.charity);
@@ -673,6 +683,20 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 break;
             case R.id.timerTimeOff:
                 pickTimer("timerOff");
+                break;
+            case R.id.policyButton:
+                Intent intentPolicyButton = new Intent();
+                intentPolicyButton.setAction(Intent.ACTION_VIEW);
+                intentPolicyButton.addCategory(Intent.CATEGORY_BROWSABLE);
+                intentPolicyButton.setData(Uri.parse("https://sites.google.com/view/ilushling/night-light-filter"));
+                startActivity(intentPolicyButton);
+                break;
+            case R.id.policyText:
+                Intent intentPolicyText = new Intent();
+                intentPolicyText.setAction(Intent.ACTION_VIEW);
+                intentPolicyText.addCategory(Intent.CATEGORY_BROWSABLE);
+                intentPolicyText.setData(Uri.parse("https://sites.google.com/view/ilushling/night-light-filter"));
+                startActivity(intentPolicyText);
                 break;
         }
     }
