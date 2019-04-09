@@ -49,7 +49,7 @@ import static ru.ilushling.screenfilter.OverlayService.CLOSE_ACTION;
 public class MainActivity extends Activity implements View.OnClickListener {
 
     // Common
-    String TAG = "MainActivity";
+    static final String TAG = "MainActivity";
     // Timer
     public static final String APP_PREFERENCES_TIMER_ON = "timerOn",
             APP_PREFERENCES_TIMER_HOUR_ON = "timerHourOn", APP_PREFERENCES_TIMER_MINUTE_ON = "timerMinuteOn",
@@ -1196,6 +1196,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 // continue here - permission was granted
                 Log.e(TAG, "Granted 2");
+            }
+        }
+        if (requestCode == 3) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // continue here - permission was granted
+                Log.e(TAG, "Granted 3");
             }
         }
     }

@@ -16,4 +16,5 @@
     <string name="transparent">Default</string>
     <string name="charity_developer">Thanks to the developer</string>
     <string name="privacy_policy">Privacy Policy</string>
+    <string name="no_permission_audio">No access to change audio mode</string>
 </resources>

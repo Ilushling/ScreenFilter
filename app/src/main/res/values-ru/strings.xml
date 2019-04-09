@@ -11,4 +11,5 @@
     <string name="transparent">Обычная</string>
     <string name="charity_developer">Благодарность разработчику</string>
     <string name="privacy_policy">Политика конфиденциальности</string>
+    <string name="no_permission_audio">Нет доступа к изменению режима звука</string>
 </resources>

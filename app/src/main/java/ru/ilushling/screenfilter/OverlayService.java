@@ -17,8 +17,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -38,10 +38,9 @@ import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_TIMER_MINUT
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_TIMER_ON;
 
 public class OverlayService extends Service {
+    // STATIC
     // Common
-    String TAG = "OverlayService";
-    // UI
-    LinearLayout linearDimmer, linearDimmerColor;
+    static final String TAG = "OverlayService";
     WindowManager wm;
     Notification.Builder notification;
     // Variables
@@ -51,7 +50,8 @@ public class OverlayService extends Service {
     protected String timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff;
     // Save Settings
     SharedPreferences mSettings;
-    // STATIC
+    // UI
+    View viewDimmer;
     public static final String OPEN_ACTION = "ru.ilushling.screenfilter.OPEN_ACTION", CLOSE_ACTION = "ru.ilushling.screenfilter.CLOSE_ACTION",
             ALARM_TIMER_ON = "ru.ilushling.screenfilter.alarmTimerOn", ALARM_TIMER_OFF = "ru.ilushling.screenfilter.alarmTimerOff";
     public static final String NOTIFICATION_CHANNEL_ID = "ilushling.screenfilter", NOTIFICATION_CHANNEL_NAME = "screenfilter";
@@ -60,13 +60,10 @@ public class OverlayService extends Service {
     Intent intentTimerOn, intentTimerOff;
     PendingIntent pIntentTimerOn, pIntentTimerOff;
 
-    private FirebaseAnalytics mFirebaseAnalytics;
-
     @Override
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
-
 
     @Override
     public void onCreate() {
@@ -75,10 +72,10 @@ public class OverlayService extends Service {
             startNotification();
         }
         // Obtain the FirebaseAnalytics instance.
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        FirebaseAnalytics firebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         Bundle bundle = new Bundle();
-        mFirebaseAnalytics.logEvent("start_service", bundle);
+        firebaseAnalytics.logEvent("start_service", bundle);
 
         mSettings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
         loadSettings();
@@ -185,22 +182,22 @@ public class OverlayService extends Service {
                 params.y = 0;
 
                 // Add or Update UI
-                if (wm != null && linearDimmerColor != null && linearDimmer != null) {
-                    setLinears(params);
+                if (wm != null /*&& viewDimmerColor != null*/ && viewDimmer != null) {
+                    setView(params);
 
-                    wm.updateViewLayout(linearDimmerColor, params);
-                    wm.updateViewLayout(linearDimmer, params);
+                    //wm.updateViewLayout(viewDimmerColor, params);
+                    wm.updateViewLayout(viewDimmer, params);
                 } else {
                     // Add
                     startNotification();
                     wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-                    linearDimmerColor = new LinearLayout(this);
-                    linearDimmer = new LinearLayout(this);
+                    //viewDimmerColor = new View(this);
+                    viewDimmer = new View(this);
 
-                    setLinears(params);
+                    setView(params);
 
-                    wm.addView(linearDimmerColor, params);
-                    wm.addView(linearDimmer, params);
+                    //wm.addView(viewDimmerColor, params);
+                    wm.addView(viewDimmer, params);
                 }
 
                 saveSettings(APP_PREFERENCES_DIMMER_ON, true);
@@ -213,56 +210,116 @@ public class OverlayService extends Service {
         }
     }
 
-    void setLinears(WindowManager.LayoutParams params) {
+    void setView(WindowManager.LayoutParams params) {
+        float colorSliderDivide = dimmerColorValue / 2.18F; // 2.18 Because color slider have max 218 value and RGB system have max 255 value
+        float dimmerSliderDivide = (1 + (2.55F * dimmerValue / 218 * 2));
+        float balance = colorSliderDivide / dimmerSliderDivide;
         switch (temperature) {
             case 1:
-                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 50, 20));
-                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 50, 20));
+                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                viewDimmer.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue)),
+                        Math.round(2.55F * balance),
+                        Math.round(0.5F * balance),
+                        Math.round(0.5F * balance)
+                        )
+                );
                 break;
             case 2:
-                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 90, 40));
-                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 90, 40));
+                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                viewDimmer.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue)),
+                        Math.round(2.55F * balance),
+                        Math.round(0.9F * balance),
+                        Math.round(0.4F * balance)
+                        )
+                );
                 break;
             case 3:
-                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 110, 50));
-                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 110, 50));
+                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                viewDimmer.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue)),
+                        Math.round(2.55F * balance),
+                        Math.round(1.1F * balance),
+                        Math.round(0.5F * balance)
+                        )
+                );
                 break;
             case 4:
-                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 135, 60));
-                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 135, 60));
+                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                viewDimmer.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue)),
+                        Math.round(2.55F * balance),
+                        Math.round(1.35F * balance),
+                        Math.round(0.6F * balance)
+                        )
+                );
                 break;
             case 5:
-                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 160, 75));
-                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 160, 75));
+                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                viewDimmer.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue)),
+                        Math.round(2.55F * balance),
+                        Math.round(1.6F * balance),
+                        Math.round(0.75F * balance)
+                        )
+                );
                 break;
             default:
-                linearDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 135, 60));
-                linearDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 135, 60));
+                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
+                viewDimmer.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue)),
+                        Math.round(2.55F * balance),
+                        Math.round(1.35F * balance),
+                        Math.round(0.6F * balance)
+                        )
+                );
                 break;
         }
         params.height = screenHeight();
+        params.width = screenWidth();
+
+        // There are some magic formula of balancing color and black
+        /*Log.e(TAG, "R " + Math.round(2.55F * balance));
+        Log.e(TAG, "G " + Math.round(1.35F * balance));
+        Log.e(TAG, "B " + Math.round(0.6F * balance));
+        */
     }
 
     void overlayOff() {
-        if (linearDimmerColor != null && linearDimmer != null && wm != null) {
+        if (/*viewDimmerColor != null && */viewDimmer != null && wm != null) {
             try {
                 saveSettings(APP_PREFERENCES_DIMMER_ON, false);
 
-                wm.removeView(linearDimmerColor);
-                wm.removeView(linearDimmer);
+                //wm.removeView(viewDimmerColor);
+                wm.removeView(viewDimmer);
             } catch (Exception exc) {
                 Log.e(TAG, "Overlay Off: " + exc);
             }
 
             wm = null;
-            linearDimmerColor = null;
-            linearDimmer = null;
+            //viewDimmerColor = null;
+            viewDimmer = null;
 
             stopForeground(true);
         }
         //Log.e(TAG, "overlay Off");
 
         stopSelf();
+    }
+
+    // Get screen height with navigation bar height (Because MATCH_PARENT = SCREEN_SIZE - NAV_BAR)
+    int screenWidth() {
+        // Screen size
+        Point size = new Point();
+        wm.getDefaultDisplay().getSize(size);
+        // Nav bar
+        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            // screen + nav bar
+            return size.x + (getResources().getDimensionPixelSize(resourceId) * 2);
+        }
+        return 0;
     }
 
     // Get screen height with navigation bar height (Because MATCH_PARENT = SCREEN_SIZE - NAV_BAR)
@@ -278,7 +335,7 @@ public class OverlayService extends Service {
         int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
         if (resourceId > 0) {
             // screen + nav bar
-            return max + getResources().getDimensionPixelSize(resourceId);
+            return size.y + (getResources().getDimensionPixelSize(resourceId) * 2);
         }
         return 0;
     }

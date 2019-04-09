@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.Toast;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
@@ -22,12 +23,12 @@ import java.util.List;
 
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_NAME;
 
-public class Utils {
-    NotificationManager notificationManager;
-    FirebaseAnalytics mFirebaseAnalytics;
+class Utils {
+    private final static String TAG = "Utils";
+    private NotificationManager notificationManager;
     private AudioManager audioManager;
     private Context context;
-    private String TAG = "Utils";
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     Utils(Context context) {
         this.context = context;
@@ -128,12 +129,14 @@ public class Utils {
                 return;
             }
         }
-
         switch (getSoundMode()) {
             case AudioManager.RINGER_MODE_SILENT:
                 audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
                 if (getSoundMode() == AudioManager.RINGER_MODE_SILENT) {
                     audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+                }
+                if (getSoundMode() == AudioManager.RINGER_MODE_SILENT) {
+                    Toast.makeText(context, context.getResources().getString(R.string.no_permission_audio), Toast.LENGTH_SHORT).show();
                 }
                 break;
             case AudioManager.RINGER_MODE_VIBRATE:
@@ -141,14 +144,25 @@ public class Utils {
                 if (getSoundMode() == AudioManager.RINGER_MODE_VIBRATE) {
                     audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
                 }
+                if (getSoundMode() == AudioManager.RINGER_MODE_VIBRATE) {
+                    Toast.makeText(context, context.getResources().getString(R.string.no_permission_audio), Toast.LENGTH_SHORT).show();
+                }
                 break;
             case AudioManager.RINGER_MODE_NORMAL:
                 audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
                 if (getSoundMode() == AudioManager.RINGER_MODE_NORMAL) {
                     audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
                 }
+                if (getSoundMode() == AudioManager.RINGER_MODE_NORMAL) {
+                    Toast.makeText(context, context.getResources().getString(R.string.no_permission_audio), Toast.LENGTH_SHORT).show();
+                }
+                break;
+            default:
+                Log.e(TAG, "sound mode " + getSoundMode());
                 break;
         }
+
+        Log.e(TAG, "sound mode " + getSoundMode());
     }
     // [END Sound Mode]
 
