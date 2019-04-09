@@ -9,6 +9,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -135,6 +136,14 @@ public class OverlayService extends Service {
         }
 
         return START_REDELIVER_INTENT;
+    }
+
+    // Update sizes when device rotate
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        overlayOn();
+        //Log.e(TAG, "rotate");
     }
 
     void overlayOn() {
@@ -313,6 +322,10 @@ public class OverlayService extends Service {
         // Screen size
         Point size = new Point();
         wm.getDefaultDisplay().getSize(size);
+        int max = Math.max(
+                size.x,
+                size.y
+        );
         // Nav bar
         int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
         if (resourceId > 0) {
