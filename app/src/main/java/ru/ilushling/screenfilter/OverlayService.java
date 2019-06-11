@@ -116,6 +116,8 @@ public class OverlayService extends Service {
 
                 if (timerOn && timerHourOn != null && timerMinuteOn != null && timerHourOff != null && timerMinuteOff != null) {
                     timerOn(timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff);
+                } else {
+                    overlayOff();
                 }
                 break;
             case "timerOff":
