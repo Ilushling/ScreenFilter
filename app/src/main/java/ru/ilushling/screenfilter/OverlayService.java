@@ -26,6 +26,8 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.util.Calendar;
 
+import androidx.core.content.ContextCompat;
+
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_DIMMER;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_DIMMER_COLOR;
 import static ru.ilushling.screenfilter.MainActivity.APP_PREFERENCES_DIMMER_ON;
@@ -404,6 +406,7 @@ public class OverlayService extends Service {
                 notification = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
                         .setContentTitle(getString(R.string.app_name))
                         .setSmallIcon(R.mipmap.ic_launcher)
+                        .setColor(ContextCompat.getColor(this, R.color.colorAccent))
                         .setContentIntent(pendingIntentClose)
                         .setCustomContentView(customView)
                         .setAutoCancel(true);
