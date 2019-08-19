@@ -181,18 +181,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         // ADS
         // Remote settings
-        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
-        FirebaseRemoteConfigSettings remoteConfigSettings = new FirebaseRemoteConfigSettings.Builder()
-                .setDeveloperModeEnabled(false)
-                .build();
-        mFirebaseRemoteConfig.setConfigSettings(remoteConfigSettings);
-        mFirebaseRemoteConfig.setDefaults(R.xml.remote_config_defaults);
-        fetchRemoteConfig();
-        boolean enableAd = mFirebaseRemoteConfig.getBoolean("enableAd");
+        try {
+            mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+            FirebaseRemoteConfigSettings remoteConfigSettings = new FirebaseRemoteConfigSettings.Builder()
+                    .setMinimumFetchIntervalInSeconds(90)
+                    .build();
+            mFirebaseRemoteConfig.setConfigSettingsAsync(remoteConfigSettings);
+            mFirebaseRemoteConfig.setDefaults(R.xml.remote_config_defaults);
+            fetchRemoteConfig();
+            boolean enableAd = mFirebaseRemoteConfig.getBoolean("enableAd");
 
-        if (enableAd) {
-            showAd();
+            if (enableAd) {
+                showAd();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
         }
+
         //Log.e(TAG, "enableAd: " + enableAd);
 
         temperature1_rb = findViewById(R.id.temperature1);
