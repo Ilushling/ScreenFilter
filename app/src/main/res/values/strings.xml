@@ -17,4 +17,16 @@
     <string name="charity_developer">Thanks to the developer</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="no_permission_audio">No access to change audio mode</string>
+    <string name="todo">TODO</string>
+    <string name="settings">settings</string>
+    <string name="color">color</string>
+    <string name="_0">0%</string>
+    <string name="brightness">brightness</string>
+    <string name="timer">timer</string>
+    <string name="on_22_00">ON 22:00</string>
+    <string name="off_7_00">OFF 7:00</string>
+    <string name="temperature">temperature</string>
+    <string name="theme">theme</string>
+    <string name="sound">sound</string>
+    <string name="checkbox">CheckBox</string>
 </resources>

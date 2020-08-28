@@ -19,7 +19,7 @@ android {
 
     defaultConfig {
         applicationId "ru.ilushling.screenfilter"
-        minSdkVersion 16
+        minSdkVersion 21
         targetSdkVersion 30
         versionCode 48
         versionName keystoreProperties['versionName']
@@ -39,6 +39,7 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             debuggable false
+            signingConfig signingConfigs.config
         }
     }
     compileOptions {
@@ -49,7 +50,7 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13'
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.browser:browser:1.2.0'
     implementation 'androidx.media:media:1.1.0'

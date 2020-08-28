@@ -28,20 +28,18 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 
 class MainActivity : Activity(), View.OnClickListener {
     private var first = true
-    private var charity = false
     private var openUISettings = false
-    private lateinit var charityCB: CheckBox
     private lateinit var timerTimeOn: TextView
     private lateinit var timerTimeOff: TextView
-    lateinit var dimmer: SeekBar
-    lateinit var dimmerColor: SeekBar
+    private lateinit var dimmer: SeekBar
+    private lateinit var dimmerColor: SeekBar
 
     // UI
-    lateinit var UIMain: ConstraintLayout
-    lateinit var Wrapper: ConstraintLayout
-    lateinit var Wrapper1: ConstraintLayout
-    lateinit var UISettings: ConstraintLayout
-    private var utils: Utils? = null
+    private lateinit var uiMain: ConstraintLayout
+    private lateinit var wrapper: ConstraintLayout
+    private lateinit var wrapper1: ConstraintLayout
+    lateinit var uiSettings: ConstraintLayout
+    private lateinit var utils: Utils
     lateinit var dimmerColorStatus: TextView
     lateinit var dimmerStatus: TextView
     private lateinit var mAdView: AdView
@@ -52,6 +50,8 @@ class MainActivity : Activity(), View.OnClickListener {
 
     // Save Settings
     private var mSettings: SharedPreferences? = null
+
+    // Firebase
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
 
     // Listener for dialog
@@ -75,8 +75,7 @@ class MainActivity : Activity(), View.OnClickListener {
         }
     }
     private lateinit var settingsButton: ImageButton
-    private lateinit var soundMode: ImageButton
-    lateinit var dimmerSwitch: Switch
+    private lateinit var dimmerSwitch: Switch
 
     // Variables
     private var theme: String? = null
@@ -89,28 +88,7 @@ class MainActivity : Activity(), View.OnClickListener {
     private var timerMinuteOn: String? = null
     private var timerHourOff: String? = null
     private var timerMinuteOff: String? = null
-    lateinit var timerSwitch: Switch
-
-    // Listener for dialog
-    var listenerSound: DialogInterface.OnClickListener = object : DialogInterface.OnClickListener {
-        val BUTTON_NEGATIVE = -2
-        val BUTTON_POSITIVE = -1
-        override fun onClick(dialog: DialogInterface, which: Int) {
-            when (which) {
-                BUTTON_NEGATIVE ->                     // int which = -2
-                    dialog.dismiss()
-                BUTTON_POSITIVE -> {
-                    // int which = -1
-                    var intent: Intent? = null
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
-                    }
-                    startActivityForResult(intent, 2)
-                    dialog.dismiss()
-                }
-            }
-        }
-    }
+    private lateinit var timerSwitch: Switch
 
     // RadioButton lightTheme;
     private lateinit var temperature1RB: RadioButton
@@ -118,50 +96,54 @@ class MainActivity : Activity(), View.OnClickListener {
     private lateinit var temperature3RB: RadioButton
     private lateinit var temperature4RB: RadioButton
     private lateinit var temperature5RB: RadioButton
-    private lateinit var darkTheme: RadioButton
-    private lateinit var transparentTheme: RadioButton
     private var mFirebaseRemoteConfig: FirebaseRemoteConfig? = null
 
     // Close
     private val broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            //Log.e(TAG, intent.getAction());
+            //Log.i(TAG, intent.getAction());
+
             when (if (intent.action != null) intent.action else "") {
                 BReceiver.APP_OVERLAY_ON -> dimmerSwitch.isChecked = true
                 BReceiver.APP_OVERLAY_OFF -> dimmerSwitch.isChecked = false
                 OverlayService.CLOSE_ACTION -> dimmerSwitch.isChecked = false
-                AudioManager.RINGER_MODE_CHANGED_ACTION -> getSoundMode()
-                CHECK_AUDIO_PERMISSION -> showPermission("sound", context.getString(R.string.restriction_sound))
             }
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
-        // Obtain the FirebaseAnalytics instance.
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+
+        MobileAds.initialize(this) {}
+
         mAdView = findViewById(R.id.adView)
-        MobileAds.initialize(this, getString(R.string.ad_app_id))
+
+        // Obtain the FirebaseAnalytics instance.
         val bundle = Bundle()
-        mFirebaseAnalytics!!.logEvent("open_app", bundle)
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+        mFirebaseAnalytics!!.logEvent("openApp", bundle)
 
         // ADS
         // Remote settings
         try {
             mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
             val remoteConfigSettings = FirebaseRemoteConfigSettings.Builder()
-                    .setMinimumFetchIntervalInSeconds(90)
+                    .setMinimumFetchIntervalInSeconds(10)
                     .build()
             mFirebaseRemoteConfig!!.setConfigSettingsAsync(remoteConfigSettings)
-            mFirebaseRemoteConfig!!.setDefaults(R.xml.remote_config_defaults)
+            mFirebaseRemoteConfig!!.setDefaultsAsync(R.xml.remote_config_defaults)
             fetchRemoteConfig()
             val enableAd = mFirebaseRemoteConfig!!.getBoolean("enableAd")
             if (enableAd) {
+                Log.i(TAG, "Ad on")
                 showAd()
+            } else {
+                Log.i(TAG, "Ad off")
             }
         } catch (e: Exception) {
-            Log.e(TAG, e.toString())
+            Log.e(TAG, "Ad error: $e")
         }
 
         //Log.e(TAG, "enableAd: " + enableAd);
@@ -187,15 +169,15 @@ class MainActivity : Activity(), View.OnClickListener {
         gd5.setColor(Color.rgb(255, 160, 75))
 
         // UI
-        Wrapper = findViewById(R.id.Wrapper)
-        Wrapper.setOnClickListener(this)
-        Wrapper1 = findViewById(R.id.Wrapper1)
-        Wrapper1.setOnClickListener(this)
-        UIMain = findViewById(R.id.UIMain)
-        UIMain.setOnClickListener(View.OnClickListener { })
-        UISettings = findViewById(R.id.UISettings)
-        UISettings.visibility = View.GONE
-        UISettings.setOnClickListener(View.OnClickListener { })
+        wrapper = findViewById(R.id.Wrapper)
+        wrapper.setOnClickListener(this)
+        wrapper1 = findViewById(R.id.Wrapper1)
+        wrapper1.setOnClickListener(this)
+        uiMain = findViewById(R.id.UIMain)
+        uiMain.setOnClickListener { }
+        uiSettings = findViewById(R.id.UISettings)
+        uiSettings.visibility = View.GONE
+        uiSettings.setOnClickListener { }
         settingsButton = findViewById(R.id.settingsButton)
         settingsButton.setOnClickListener(this)
         // Dimmer
@@ -211,88 +193,37 @@ class MainActivity : Activity(), View.OnClickListener {
         timerTimeOff.setOnClickListener(this)
         timerSwitch = findViewById(R.id.timerSwitch)
 
-        // Theme
-        darkTheme = findViewById(R.id.darkTheme)
-        darkTheme.setOnClickListener(this)
-        /*
-        lightTheme = findViewById(R.id.lightTheme);
-        lightTheme.setOnClickListener(this);
-        */transparentTheme = findViewById(R.id.transparentTheme)
-        transparentTheme.setOnClickListener(this)
-
         // Policy
         policyButton = findViewById(R.id.policyButton)
         policyButton.setOnClickListener(this)
         policyText = findViewById(R.id.policyText)
         policyText.setOnClickListener(this)
 
-        // Charity
-        charityCB = findViewById(R.id.charity)
-        charityCB.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { _, isChecked ->
-            charity = isChecked
-            // Analytics
-            var charityLoad = charity
-            if (mSettings!!.contains(APP_PREFERENCES_CHARITY)) {
-                try {
-                    charityLoad = mSettings!!.getBoolean(APP_PREFERENCES_CHARITY, false)
-                } catch (e: Exception) {
-                }
-            }
-            if (!isChecked) {
-                //hideAd();
-                if (charityLoad != charity) {
-                    val bundle = Bundle()
-                    bundle.putString("Charity", "user activate thanks")
-                    mFirebaseAnalytics!!.logEvent("activate_charity", bundle)
-                }
-            } else {
-                //showAd();
-                if (charityLoad != charity) {
-                    val bundle = Bundle()
-                    bundle.putString("Charity", "user deactivate app")
-                    mFirebaseAnalytics!!.logEvent("deactivate_charity", bundle)
-                }
-            }
-            saveSettings(APP_PREFERENCES_CHARITY, charity)
-        })
-
         // Check allows
         utils = Utils(this)
         checkAllows()
         // Protect Power Manager
-        utils!!.protectAppManager()
-
-        // Sound Mode
-        soundMode = findViewById(R.id.soundMode)
-        getSoundMode()
-        soundMode.setOnClickListener(View.OnClickListener {
-            val utils = Utils(applicationContext)
-            if (checkAllows()) {
-                utils.setSoundMode()
-                soundMode.visibility = View.VISIBLE
-            } else {
-                soundMode.visibility = View.GONE
-            }
-        })
+        utils.protectAppManager()
 
         // Settings
         mSettings = getSharedPreferences(APP_PREFERENCES_NAME, MODE_PRIVATE)
 
         // Dimmer
-        dimmerSwitch.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { _, isChecked ->
+        dimmerSwitch.setOnCheckedChangeListener { _, isChecked ->
             dimmerOn = isChecked
             saveSettings(APP_PREFERENCES_DIMMER_ON, dimmerOn)
             overlayService()
-        })
+        }
 
         // Timer
-        timerSwitch.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { _, isChecked ->
+        timerSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (checkAllows()) {
                 timerOn = isChecked
                 saveSettings(APP_PREFERENCES_TIMER_ON, timerOn)
+
                 timerService()
             }
-        })
+        }
 
         // Receiver
         val filter = IntentFilter()
@@ -340,6 +271,7 @@ class MainActivity : Activity(), View.OnClickListener {
 
     override fun onStart() {
         super.onStart()
+
         loadSettings()
     }
 
@@ -382,8 +314,10 @@ class MainActivity : Activity(), View.OnClickListener {
     private fun saveSettings(key: String, value: Int) {
         // Prepare for save
         val editor = mSettings!!.edit()
+
         // Edit Variables
         editor.putInt(key, value)
+
         // Save
         editor.apply()
     }
@@ -391,8 +325,10 @@ class MainActivity : Activity(), View.OnClickListener {
     private fun saveSettings(key: String, value: String) {
         // Prepare for save
         val editor = mSettings!!.edit()
+
         // Edit Variables
         editor.putString(key, value)
+
         // Save
         editor.apply()
     }
@@ -417,79 +353,71 @@ class MainActivity : Activity(), View.OnClickListener {
     }
 
     private fun showUISettings() {
-        UISettings.visibility = View.VISIBLE
+        uiSettings.visibility = View.VISIBLE
         // Animation alpha
-        UISettings.animate().alpha(1.0f).duration = 150
-
-        // ADS
-        /*
-        if (charity_icon) {
-            //showAd();
-        }
-        */
+        uiSettings.animate().alpha(1.0f).duration = 150
     }
 
     private fun hideUISettings() {
         // Animation alpha
-        UISettings.animate().alpha(0.0f).setDuration(150).setListener(object : AnimatorListenerAdapter() {
+        uiSettings.animate().alpha(0.0f).setDuration(150).setListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
                 super.onAnimationEnd(animation)
                 // Visibility
-                UISettings.visibility = View.GONE
+                uiSettings.visibility = View.GONE
                 // Clear listener
-                UISettings.animate().setListener(null)
+                uiSettings.animate().setListener(null)
                 //hideAd();
             }
         })
     }
 
     private fun showAd() {
-        val adRequest = AdRequest.Builder().addTestDevice("1D5A1AEA8E6CA40D5189183547904B82").addTestDevice("3EC30EB95D85614AD55C26E956492D9E").build()
+        val adRequest = AdRequest.Builder().build()
         mAdView = findViewById(R.id.adView)
         mAdView.loadAd(adRequest)
         mAdView.visibility = View.VISIBLE
         mAdView.adListener = object : AdListener() {
             override fun onAdLoaded() {
                 // Code to be executed when an ad finishes loading.
-                Log.e(TAG, "loaded")
+                Log.i(TAG, "Ad loaded")
             }
 
             override fun onAdFailedToLoad(errorCode: Int) {
                 // Code to be executed when an ad request fails.
-                Log.e(TAG, "failed: $errorCode")
+                Log.e(TAG, "Ad failed to load: $errorCode")
             }
 
             override fun onAdOpened() {
                 // Code to be executed when an ad opens an overlay that
                 // covers the screen.
-                Log.e(TAG, "opened")
+                Log.i(TAG, "Ad opened")
             }
 
             override fun onAdLeftApplication() {
                 // Code to be executed when the user has left the app.
-                Log.e(TAG, "left app")
+                Log.i(TAG, "Ad left app")
             }
 
             override fun onAdClosed() {
                 // Code to be executed when when the user is about to return
                 // to the app after tapping on an ad.
-                Log.e(TAG, "closed")
+                Log.i(TAG, "Ad closed")
             }
         }
     }
 
-    fun hideAd() {
+    /*fun hideAd() {
         mAdView.destroy()
         mAdView.visibility = View.GONE
-    }
+    }*/
 
     override fun onClick(v: View) {
-        val intent: Intent
         when (v.id) {
             R.id.Wrapper -> closeActivity()
             R.id.Wrapper1 -> closeActivity()
             R.id.settingsButton -> {
-                openUISettings = if (UISettings.visibility == View.GONE) {
+                openUISettings = if (uiSettings.visibility == View.GONE) {
                     // Show
                     showUISettings()
                     true
@@ -525,38 +453,7 @@ class MainActivity : Activity(), View.OnClickListener {
                 temperature = 5
                 overlayService()
             }
-            R.id.darkTheme -> if (theme != "dark") {
-                theme = "dark"
-                saveSettings(APP_PREFERENCES_THEME, theme!!)
-                if (dimmerSwitch.isChecked) {
-                    intent = Intent(this, OverlayService::class.java)
-                    intent.action = "theme"
-                    intent.putExtra("theme", theme)
-                    if (checkAllows()) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            startForegroundService(intent)
-                        } else {
-                            startService(intent)
-                        }
-                    }
-                }
-            }
-            R.id.transparentTheme -> if (theme != "transparent") {
-                theme = "transparent"
-                saveSettings(APP_PREFERENCES_THEME, theme!!)
-                if (dimmerSwitch.isChecked) {
-                    intent = Intent(this, OverlayService::class.java)
-                    intent.action = "theme"
-                    intent.putExtra("theme", theme)
-                    if (checkAllows()) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            startForegroundService(intent)
-                        } else {
-                            startService(intent)
-                        }
-                    }
-                }
-            }
+
             R.id.timerTimeOn -> pickTimer("timerOn")
             R.id.timerTimeOff -> pickTimer("timerOff")
             R.id.policyButton -> {
@@ -577,32 +474,10 @@ class MainActivity : Activity(), View.OnClickListener {
     }
 
     /**
-     * 1 check value for contains in setting file [ELSE] save default value
-     * 2 check value for valid value [ELSE] if invalid remove value and save default value
+     * 1 check value for contains in setting file ELSE save default value
+     * 2 check value for valid value ELSE if invalid remove value and save default value
      */
     private fun loadSettings() {
-        // Theme
-        if (mSettings!!.contains(APP_PREFERENCES_THEME)) {
-            try {
-                theme = mSettings!!.getString(APP_PREFERENCES_THEME, "dark")
-                when (theme) {
-                    "dark" -> darkTheme.isChecked = true
-                    "transparent" -> transparentTheme.isChecked = true
-                    else -> {
-                        darkTheme.isChecked = true
-                        clearSetting(APP_PREFERENCES_THEME)
-                        saveSettings(APP_PREFERENCES_THEME, "dark")
-                    }
-                }
-            } catch (exc: Exception) {
-                clearSetting(APP_PREFERENCES_THEME)
-                saveSettings(APP_PREFERENCES_THEME, "dark")
-            }
-        } else {
-            saveSettings(APP_PREFERENCES_THEME, "dark")
-            theme = mSettings!!.getString(APP_PREFERENCES_THEME, "dark")
-        }
-
         // [START Overlay]
         // Dimmer on
         if (mSettings!!.contains(APP_PREFERENCES_DIMMER_ON)) {
@@ -753,21 +628,6 @@ class MainActivity : Activity(), View.OnClickListener {
             saveSettings(APP_PREFERENCES_OPEN_SETTINGS, false)
         }
 
-        // Charity
-        if (mSettings!!.contains(APP_PREFERENCES_CHARITY)) {
-            try {
-                charity = mSettings!!.getBoolean(APP_PREFERENCES_CHARITY, false)
-                charityCB.isChecked = charity
-            } catch (exc: Exception) {
-                clearSetting(APP_PREFERENCES_TIMER_MINUTE_OFF)
-                saveSettings(APP_PREFERENCES_TIMER_MINUTE_OFF, false)
-                charityCB.isChecked = charity
-            }
-        } else {
-            saveSettings(APP_PREFERENCES_CHARITY, false)
-            charityCB.isChecked = charity
-        }
-
         // [START format minutes to 00]
         // ON
         var sb = StringBuilder()
@@ -816,27 +676,7 @@ class MainActivity : Activity(), View.OnClickListener {
         overlayService()
     }
 
-    // Sound Mode
-    fun getSoundMode() {
-        val utils = Utils(this)
-        when (utils.soundMode) {
-            0 -> {
-                soundMode.visibility = View.VISIBLE
-                soundMode.setImageResource(R.drawable.sound_off)
-            }
-            1 -> {
-                soundMode.visibility = View.VISIBLE
-                soundMode.setImageResource(R.drawable.sound_vibration)
-            }
-            2 -> {
-                soundMode.visibility = View.VISIBLE
-                soundMode.setImageResource(R.drawable.sound_on)
-            }
-            else -> soundMode.visibility = View.GONE
-        }
-    }
-
-    private fun permitted() {
+    private fun permitUI() {
         dimmerSwitch.isEnabled = true
         settingsButton.isEnabled = true
         dimmerColor.isEnabled = true
@@ -846,7 +686,7 @@ class MainActivity : Activity(), View.OnClickListener {
         //timerTimeOff.setEnabled(true);
     }
 
-    private fun resricted() {
+    private fun restrictUI() {
         //dimmerSwitch.setEnabled(false);
         dimmerSwitch.isChecked = false
         settingsButton.isEnabled = false
@@ -868,13 +708,13 @@ class MainActivity : Activity(), View.OnClickListener {
          * 3 if don't work dialog run alternative via settings (Activity result)
          */
         return if (checkPermissionOverlay()) {
-            permitted()
+            permitUI()
             // CLOSE_SYSTEM_DIALOGS
             val it = Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
             sendBroadcast(it)
             true
         } else {
-            resricted()
+            restrictUI()
             false
         }
     }
@@ -906,7 +746,7 @@ class MainActivity : Activity(), View.OnClickListener {
                 minute = timerMinuteOff!!.toInt()
             }
         }
-        val timePickerDialog = TimePickerDialog(this@MainActivity, TimePickerDialog.THEME_DEVICE_DEFAULT_DARK, { view, hour, minute ->
+        val timePickerDialog = TimePickerDialog(this@MainActivity, TimePickerDialog.THEME_DEVICE_DEFAULT_DARK, { _, hour, minute ->
             when (action) {
                 "timerOn" -> {
                     timerHourOn = hour.toString()
@@ -974,34 +814,25 @@ class MainActivity : Activity(), View.OnClickListener {
 
     private fun fetchRemoteConfig() {
         // cache expiration in seconds
-        var cacheExpiration = 30
-        //expire the cache immediately for development mode.
-        if (mFirebaseRemoteConfig!!.info.configSettings.isDeveloperModeEnabled) {
-            cacheExpiration = 0
-        }
+        val cacheExpiration = 15
+
         mFirebaseRemoteConfig!!.fetch(cacheExpiration.toLong())
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         // After config data is successfully fetched, it must be activated before newly fetched
                         // values are returned.
-                        mFirebaseRemoteConfig!!.activateFetched()
+                        mFirebaseRemoteConfig!!.activate()
                     }
                 }
     }
 
     // Dialog for permission
-    fun showPermission(permission: String?, message: String?) {
+    private fun showPermission(permission: String?, message: String?) {
         when (permission) {
             "overlay" -> AlertDialog.Builder(this)
                     .setMessage(message)
                     .setPositiveButton("OK", listenerOverlay)
                     .setNegativeButton("Cancel", listenerOverlay)
-                    .create()
-                    .show()
-            "sound" -> AlertDialog.Builder(this)
-                    .setMessage(message)
-                    .setPositiveButton("OK", listenerSound)
-                    .setNegativeButton("Cancel", listenerSound)
                     .create()
                     .show()
         }
@@ -1014,30 +845,31 @@ class MainActivity : Activity(), View.OnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (Settings.canDrawOverlays(this)) {
                     // continue here - permission was granted
-                    permitted()
-                    Log.e(TAG, "Granted 1")
+                    permitUI()
+                    Log.i(TAG, "Granted 1")
                 }
             }
         }
         if (requestCode == 2) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 // continue here - permission was granted
-                Log.e(TAG, "Granted 2")
+                Log.i(TAG, "Granted 2")
             }
         }
         if (requestCode == 3) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 // continue here - permission was granted
-                Log.e(TAG, "Granted 3")
+                Log.i(TAG, "Granted 3")
             }
         }
     }
 
     // [END Permissions]
     private fun closeActivity() {
-        Wrapper.animate().alpha(0.0f).setDuration(150).setListener(object : AnimatorListenerAdapter() {
+        wrapper.animate().alpha(0.0f).setDuration(150).setListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
                 super.onAnimationEnd(animation)
+
                 finish()
             }
         })
@@ -1045,24 +877,28 @@ class MainActivity : Activity(), View.OnClickListener {
 
     override fun onPause() {
         super.onPause()
-        Wrapper.animate().alpha(0.0f).duration = 150
+
+        wrapper.animate().alpha(0.0f).duration = 150
     }
 
     override fun onResume() {
         super.onResume()
+
         val filter = IntentFilter()
         filter.addAction(OverlayService.CLOSE_ACTION)
         registerReceiver(broadcastReceiver, filter)
-        Wrapper.animate().alpha(1.0f).duration = 150
+        wrapper.animate().alpha(1.0f).duration = 150
     }
 
     override fun onStop() {
         super.onStop()
-        Wrapper.animate().alpha(0.0f).duration = 150
+
+        wrapper.animate().alpha(0.0f).duration = 150
     }
 
     override fun onDestroy() {
         super.onDestroy()
+
         val bundle = Bundle()
         bundle.putInt("dimmer", dimmerValue)
         bundle.putInt("dimmerColor", dimmerColorValue)
@@ -1071,7 +907,9 @@ class MainActivity : Activity(), View.OnClickListener {
         bundle.putString("timerTimeOff", "$timerHourOff:$timerMinuteOff")
         bundle.putInt("temperature", temperature)
         bundle.putString("theme", theme)
+
         mFirebaseAnalytics!!.logEvent("settings", bundle)
+
         try {
             // Free receiver
             unregisterReceiver(broadcastReceiver)
@@ -1098,7 +936,6 @@ class MainActivity : Activity(), View.OnClickListener {
         const val APP_PREFERENCES_DIMMER_COLOR = "dimmerColor"
         const val APP_PREFERENCES_DIMMER = "dimmer"
         const val APP_PREFERENCES_TEMPERATURE = "temperature"
-        const val APP_PREFERENCES_CHARITY = "charity_icon"
         const val APP_PREFERENCES_OPEN_SETTINGS = "openSettings"
         const val APP_PREFERENCES_THEME = "theme"
 

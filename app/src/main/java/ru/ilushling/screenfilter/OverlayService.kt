@@ -18,44 +18,53 @@ import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import com.google.firebase.analytics.FirebaseAnalytics
 import java.util.*
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 class OverlayService : Service() {
-    var wm: WindowManager? = null
-    var notification: Notification.Builder? = null
+    private var wm: WindowManager? = null
+    private var notification: Notification.Builder? = null
 
     // Variables
-    var theme: String? = ""
-    var dimmerColorValue = 0
-    var dimmerValue = 0
-    var temperature = 0
-    var timerOn = false
-    protected var timerHourOn: String? = null
-    protected var timerMinuteOn: String? = null
-    protected var timerHourOff: String? = null
-    protected var timerMinuteOff: String? = null
+    private var theme: String? = ""
+    private var dimmerColorValue = 0
+    private var dimmerValue = 0
+    private var temperature = 0
+    private var timerOn = false
+    private lateinit var timerHourOn: String
+    private lateinit var timerMinuteOn: String
+    private lateinit var timerHourOff: String
+    private lateinit var timerMinuteOff: String
 
     // Save Settings
-    var mSettings: SharedPreferences? = null
+    private lateinit var mSettings: SharedPreferences
 
     // UI
-    var viewDimmer: View? = null
-    var intentTimerOn: Intent? = null
-    var intentTimerOff: Intent? = null
-    var pIntentTimerOn: PendingIntent? = null
-    var pIntentTimerOff: PendingIntent? = null
+    private var viewDimmer: View? = null
+    private lateinit var intentTimerOn: Intent
+    private lateinit var intentTimerOff: Intent
+    private lateinit var pIntentTimerOn: PendingIntent
+    private lateinit var pIntentTimerOff: PendingIntent
+
+    // Firebase
+    private lateinit var mFirebaseAnalytics: FirebaseAnalytics
+
     override fun onBind(intent: Intent): IBinder? {
         throw UnsupportedOperationException("Not yet implemented")
     }
 
     override fun onCreate() {
         super.onCreate()
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startNotification()
         }
+
         // Obtain the FirebaseAnalytics instance.
         val firebaseAnalytics = FirebaseAnalytics.getInstance(this)
         val bundle = Bundle()
-        firebaseAnalytics.logEvent("start_service", bundle)
+        firebaseAnalytics.logEvent("createService", bundle)
+
         mSettings = getSharedPreferences(MainActivity.APP_PREFERENCES_NAME, MODE_PRIVATE)
         loadSettings()
         intentTimerOn = createIntent(ALARM_TIMER_ON)
@@ -64,27 +73,28 @@ class OverlayService : Service() {
         pIntentTimerOff = PendingIntent.getBroadcast(this, 0, intentTimerOff, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
-    fun createIntent(action: String?): Intent {
+    private fun createIntent(action: String?): Intent {
         val intent = Intent(this, BReceiver::class.java)
         intent.action = action
         return intent
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        val action = if (intent.action != null) intent.action else ""
-        when (action) {
+        when (if (intent.action != null) intent.action else "") {
             "overlayOn" -> {
                 theme = intent.getStringExtra("theme")
                 dimmerColorValue = intent.getIntExtra("dimmerColorValue", 0)
                 dimmerValue = intent.getIntExtra("dimmerValue", 0)
                 temperature = intent.getIntExtra("temperature", 4)
+
                 overlayOn()
             }
             "overlayOff" -> overlayOff()
             "timerOn" -> {
                 loadSettings()
-                if (timerOn && timerHourOn != null && timerMinuteOn != null && timerHourOff != null && timerMinuteOff != null) {
-                    timerOn(timerHourOn!!, timerMinuteOn!!, timerHourOff!!, timerMinuteOff!!)
+
+                if (timerOn) {
+                    timerOn(timerHourOn, timerMinuteOn, timerHourOff, timerMinuteOff)
                 } else {
                     overlayOff()
                 }
@@ -92,12 +102,15 @@ class OverlayService : Service() {
             "timerOff" -> timerOff()
             "alarmTimerOn" -> {
                 loadSettings()
+
                 overlayOn()
             }
             "alarmTimerOff" -> overlayOff()
             "theme" -> {
                 theme = intent.getStringExtra("theme")
+
                 stopForeground(true)
+
                 startNotification()
             }
         }
@@ -107,19 +120,22 @@ class OverlayService : Service() {
     // Update sizes when device rotate
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+
         overlayOn()
-        //Log.e(TAG, "rotate");
+
+        Log.i(TAG, "rotate")
     }
 
-    fun overlayOn() {
+    private fun overlayOn() {
         try {
+            Log.i(TAG, "1")
             if (dimmerColorValue == 0 && dimmerValue == 0) {
                 notification = null
             } else {
                 // Prepare UI
                 // UI Params
-                val params: WindowManager.LayoutParams
-                params = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Log.i(TAG, "2")
+                val params: WindowManager.LayoutParams = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     WindowManager.LayoutParams(
                             WindowManager.LayoutParams.MATCH_PARENT,
                             WindowManager.LayoutParams.MATCH_PARENT,
@@ -161,78 +177,77 @@ class OverlayService : Service() {
                 } else {
                     // Add
                     startNotification()
-                    wm = getSystemService(WINDOW_SERVICE) as WindowManager
+                    wm = getSystemService(WINDOW_SERVICE) as WindowManager?
                     //viewDimmerColor = new View(this);
                     viewDimmer = View(this)
+
                     setView(params)
 
                     //wm.addView(viewDimmerColor, params);
                     wm!!.addView(viewDimmer, params)
                 }
+
                 saveSettings(MainActivity.APP_PREFERENCES_DIMMER_ON, true)
 
-                //Log.e(TAG, "Overlay On");
+                Log.i(TAG, "Overlay On")
+
+                // Obtain the FirebaseAnalytics instance.
+                val bundle = Bundle()
+                mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+                mFirebaseAnalytics.logEvent("overlayOn", bundle)
             }
         } catch (exc: Exception) {
-            Log.e(TAG, "Overlay On: $exc")
+            Log.e(TAG, "Error Overlay On: $exc")
             overlayOff()
         }
     }
 
-    fun setView(params: WindowManager.LayoutParams) {
+    private fun setView(params: WindowManager.LayoutParams) {
         val colorSliderDivide = dimmerColorValue / 2.18f // 2.18 Because color slider have max 218 value and RGB system have max 255 value
         val dimmerSliderDivide = 1 + 2.55f * dimmerValue / 218 * 2
         val balance = colorSliderDivide / dimmerSliderDivide
+
+        Log.i(TAG, "4" + viewDimmer)
         when (temperature) {
-            1 ->                 //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 50, 20));
-                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
-                viewDimmer!!.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue).toFloat()),
-                        Math.round(2.55f * balance),
-                        Math.round(0.5f * balance),
-                        Math.round(0.5f * balance)
-                )
-                )
-            2 ->                 //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 90, 40));
-                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
-                viewDimmer!!.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue).toFloat()),
-                        Math.round(2.55f * balance),
-                        Math.round(0.9f * balance),
-                        Math.round(0.4f * balance)
-                )
-                )
-            3 ->                 //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 110, 50));
-                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
-                viewDimmer!!.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue).toFloat()),
-                        Math.round(2.55f * balance),
-                        Math.round(1.1f * balance),
-                        Math.round(0.5f * balance)
-                )
-                )
-            4 ->                 //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 135, 60));
-                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
-                viewDimmer!!.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue).toFloat()),
-                        Math.round(2.55f * balance),
-                        Math.round(1.35f * balance),
-                        Math.round(0.6f * balance)
-                )
-                )
-            5 ->                 //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 160, 75));
-                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
-                viewDimmer!!.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue).toFloat()),
-                        Math.round(2.55f * balance),
-                        Math.round(1.6f * balance),
-                        Math.round(0.75f * balance)
-                )
-                )
-            else ->                 //viewDimmerColor.setBackgroundColor(Color.argb(dimmerColorValue, 255, 135, 60));
-                //viewDimmer.setBackgroundColor(Color.argb(dimmerValue, 0, 0, 0));
-                viewDimmer!!.setBackgroundColor(Color.argb(Math.round(Math.max(dimmerValue, dimmerColorValue).toFloat()),
-                        Math.round(2.55f * balance),
-                        Math.round(1.35f * balance),
-                        Math.round(0.6f * balance)
-                )
-                )
+            1 -> viewDimmer!!.setBackgroundColor(Color.argb(max(dimmerValue, dimmerColorValue).toFloat().roundToInt(),
+                    (2.55f * balance).roundToInt(),
+                    (0.5f * balance).roundToInt(),
+                    (0.5f * balance).roundToInt()
+            )
+            )
+            2 -> viewDimmer!!.setBackgroundColor(Color.argb(max(dimmerValue, dimmerColorValue).toFloat().roundToInt(),
+                    (2.55f * balance).roundToInt(),
+                    (0.9f * balance).roundToInt(),
+                    (0.4f * balance).roundToInt()
+            )
+            )
+            3 -> viewDimmer!!.setBackgroundColor(Color.argb(max(dimmerValue, dimmerColorValue).toFloat().roundToInt(),
+                    (2.55f * balance).roundToInt(),
+                    (1.1f * balance).roundToInt(),
+                    (0.5f * balance).roundToInt()
+            )
+            )
+            4 -> viewDimmer!!.setBackgroundColor(Color.argb(max(dimmerValue, dimmerColorValue).toFloat().roundToInt(),
+                    (2.55f * balance).roundToInt(),
+                    (1.35f * balance).roundToInt(),
+                    (0.6f * balance).roundToInt()
+            )
+            )
+            5 -> viewDimmer!!.setBackgroundColor(Color.argb(max(dimmerValue, dimmerColorValue).toFloat().roundToInt(),
+                    (2.55f * balance).roundToInt(),
+                    (1.6f * balance).roundToInt(),
+                    (0.75f * balance).roundToInt()
+            )
+            )
+            else -> viewDimmer!!.setBackgroundColor(Color.argb(max(dimmerValue, dimmerColorValue).toFloat().roundToInt(),
+                    (2.55f * balance).roundToInt(),
+                    (1.35f * balance).roundToInt(),
+                    (0.6f * balance).roundToInt()
+            )
+            )
         }
+
+        Log.i(TAG, "5")
         params.height = screenHeight()
         params.width = screenWidth()
 
@@ -243,34 +258,37 @@ class OverlayService : Service() {
         */
     }
 
-    fun overlayOff() {
-        if ( /*viewDimmerColor != null && */viewDimmer != null && wm != null) {
-            try {
-                saveSettings(MainActivity.APP_PREFERENCES_DIMMER_ON, false)
+    private fun overlayOff() {
+        try {
+            saveSettings(MainActivity.APP_PREFERENCES_DIMMER_ON, false)
 
-                //wm.removeView(viewDimmerColor);
-                wm!!.removeView(viewDimmer)
-            } catch (exc: Exception) {
-                Log.e(TAG, "Overlay Off: $exc")
-            }
-            wm = null
-            //viewDimmerColor = null;
-            viewDimmer = null
-            stopForeground(true)
+            //wm.removeView(viewDimmerColor);
+            wm!!.removeView(viewDimmer)
+        } catch (exc: Exception) {
+            Log.e(TAG, "Overlay Off: $exc")
         }
-        //Log.e(TAG, "overlay Off");
+
+        wm = null
+        //viewDimmerColor = null;
+        viewDimmer = null
+        stopForeground(true)
+
+        Log.i(TAG, "overlay Off")
+
+        // Obtain the FirebaseAnalytics instance.
+        val bundle = Bundle()
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+        mFirebaseAnalytics.logEvent("overlayOff", bundle)
+
         stopSelf()
     }
 
     // Get screen height with navigation bar height (Because MATCH_PARENT = SCREEN_SIZE - NAV_BAR)
-    fun screenWidth(): Int {
+    private fun screenWidth(): Int {
         // Screen size
         val size = Point()
         wm!!.defaultDisplay.getSize(size)
-        val max = Math.max(
-                size.x,
-                size.y
-        )
+
         // Nav bar
         val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
         return if (resourceId > 0) {
@@ -280,14 +298,11 @@ class OverlayService : Service() {
     }
 
     // Get screen height with navigation bar height (Because MATCH_PARENT = SCREEN_SIZE - NAV_BAR)
-    fun screenHeight(): Int {
+    private fun screenHeight(): Int {
         // Screen size
         val size = Point()
         wm!!.defaultDisplay.getSize(size)
-        val max = Math.max(
-                size.x,
-                size.y
-        )
+
         // Nav bar
         val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
         return if (resourceId > 0) {
@@ -298,64 +313,56 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.e(TAG, "Service: onDestroy")
+
+        Log.i(TAG, "Service: onDestroy")
+
         overlayOff()
     }
 
     private fun startNotification() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            // Prepare
-            val mNotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            // Create remote view and set bigContentView.
-            val customView: RemoteViews
-            customView = when (theme) {
-                "dark" -> RemoteViews(this.packageName, R.layout.notification_dark)
-                "transparent" -> RemoteViews(this.packageName, R.layout.notification_transparent)
-                else -> RemoteViews(this.packageName, R.layout.notification_dark)
-            }
+        // Prepare
+        val mNotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        // Create remote view and set bigContentView.
+        val customView = RemoteViews(this.packageName, R.layout.notification_dark)
 
-            // Intents to BReceiver
-            // Open intent
-            val notificationIntentOpen = Intent(this, BReceiver::class.java).setAction(OPEN_ACTION)
-            val pendingIntentOpen = PendingIntent.getBroadcast(this, 0, notificationIntentOpen, PendingIntent.FLAG_UPDATE_CURRENT)
-            // Close intent
-            val notificationIntentClose = Intent(this, BReceiver::class.java).setAction(CLOSE_ACTION)
-            val pendingIntentClose = PendingIntent.getBroadcast(this, 0, notificationIntentClose, PendingIntent.FLAG_UPDATE_CURRENT)
+        // Intents to BReceiver
+        // Open intent
+        val notificationIntentOpen = Intent(this, BReceiver::class.java).setAction(OPEN_ACTION)
+        val pendingIntentOpen = PendingIntent.getBroadcast(this, 0, notificationIntentOpen, PendingIntent.FLAG_UPDATE_CURRENT)
+        // Close intent
+        val notificationIntentClose = Intent(this, BReceiver::class.java).setAction(CLOSE_ACTION)
+        val pendingIntentClose = PendingIntent.getBroadcast(this, 0, notificationIntentClose, PendingIntent.FLAG_UPDATE_CURRENT)
 
-            // Build notification
-            notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                if (mNotificationManager != null) {
-                    val importance = NotificationManager.IMPORTANCE_MIN
-                    val notificationChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, importance)
-                    mNotificationManager.createNotificationChannel(notificationChannel)
-                }
-                Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
-                        .setContentTitle(getString(R.string.app_name))
-                        .setSmallIcon(R.mipmap.ic_launcher)
-                        .setColor(ContextCompat.getColor(this, R.color.colorAccent))
-                        .setContentIntent(pendingIntentClose)
-                        .setCustomContentView(customView)
-                        .setAutoCancel(true)
-            } else {
-                Notification.Builder(this)
-                        .setContentTitle(getString(R.string.app_name))
-                        .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentIntent(pendingIntentClose)
-                        .setContent(customView)
-                        .setPriority(Notification.PRIORITY_MAX)
-                        .setAutoCancel(true)
-            }
-            // Listeners
-            customView.setOnClickPendingIntent(R.id.settings, pendingIntentOpen)
-            if (mNotificationManager != null) {
-                mNotificationManager.notify(ID_SERVICE, notification!!.build())
-                startForeground(ID_SERVICE, notification!!.build())
-            }
+        // Build notification
+        notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val importance = NotificationManager.IMPORTANCE_MIN
+            val notificationChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, importance)
+            mNotificationManager.createNotificationChannel(notificationChannel)
+            Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
+                    .setContentTitle(getString(R.string.app_name))
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setColor(ContextCompat.getColor(this, R.color.colorAccent))
+                    .setContentIntent(pendingIntentClose)
+                    .setCustomContentView(customView)
+                    .setAutoCancel(true)
+        } else {
+            Notification.Builder(this)
+                    .setContentTitle(getString(R.string.app_name))
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentIntent(pendingIntentClose)
+                    .setContent(customView)
+                    .setPriority(Notification.PRIORITY_MAX)
+                    .setAutoCancel(true)
         }
+        // Listeners
+        customView.setOnClickPendingIntent(R.id.settings, pendingIntentOpen)
+        mNotificationManager.notify(ID_SERVICE, notification!!.build())
+        startForeground(ID_SERVICE, notification!!.build())
     }
 
-    fun timerOn(timerHourOn: String, timerMinuteOn: String, timerHourOff: String, timerMinuteOff: String) {
+    private fun timerOn(timerHourOn: String, timerMinuteOn: String, timerHourOff: String, timerMinuteOff: String) {
         val am = getSystemService(ALARM_SERVICE) as AlarmManager
+
         // Convert timer
         val now = Calendar.getInstance()
         val timeOn = Calendar.getInstance()
@@ -395,86 +402,108 @@ class OverlayService : Service() {
                 }
             }
         }
+
         // Start timer
-        if (am != null) {
-            am.cancel(pIntentTimerOn)
-            am.cancel(pIntentTimerOff)
-            am.setRepeating(AlarmManager.RTC, timeOn.timeInMillis, AlarmManager.INTERVAL_DAY, pIntentTimerOn)
-            am.setRepeating(AlarmManager.RTC, timeOff.timeInMillis, AlarmManager.INTERVAL_DAY, pIntentTimerOff)
-        }
-        //Log.e(TAG, "timer On");
+        am.cancel(pIntentTimerOn)
+        am.cancel(pIntentTimerOff)
+        am.setRepeating(AlarmManager.RTC, timeOn.timeInMillis, AlarmManager.INTERVAL_DAY, pIntentTimerOn)
+        am.setRepeating(AlarmManager.RTC, timeOff.timeInMillis, AlarmManager.INTERVAL_DAY, pIntentTimerOff)
+
         timerOn = true
         saveSettings(MainActivity.APP_PREFERENCES_TIMER_ON, timerOn)
+
+        Log.i(TAG, "timer On")
+
+        // Obtain the FirebaseAnalytics instance.
+        val bundle = Bundle()
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+        mFirebaseAnalytics.logEvent("timerOn", bundle)
     }
 
-    fun turnOnDimmer() {
+    private fun turnOnDimmer() {
         // UpdateUI
         val i = createIntent(ALARM_TIMER_ON)
         sendBroadcast(i)
+
+        // Obtain the FirebaseAnalytics instance.
+        val bundle = Bundle()
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+        mFirebaseAnalytics.logEvent("turnOnDimmer", bundle)
     }
 
-    fun turnOffDimmer() {
+    private fun turnOffDimmer() {
         // UpdateUI
         val i = createIntent(ALARM_TIMER_OFF)
         sendBroadcast(i)
+
+        // Obtain the FirebaseAnalytics instance.
+        val bundle = Bundle()
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+        mFirebaseAnalytics.logEvent("turnOffDimmer", bundle)
     }
 
-    fun timerOff() {
+    private fun timerOff() {
         val am = getSystemService(ALARM_SERVICE) as AlarmManager
-        if (am != null) {
-            am.cancel(pIntentTimerOn)
-            am.cancel(pIntentTimerOff)
-        }
-        pIntentTimerOn!!.cancel()
-        pIntentTimerOff!!.cancel()
-        val isWorking = PendingIntent.getBroadcast(this, 0, createIntent(ALARM_TIMER_ON), PendingIntent.FLAG_NO_CREATE) != null //just changed the flag
-        Log.e(TAG, "alarm is " + (if (isWorking) "" else "not ") + "working...")
+        am.cancel(pIntentTimerOn)
+        am.cancel(pIntentTimerOff)
+        pIntentTimerOn.cancel()
+        pIntentTimerOff.cancel()
+
+        val isWorking = PendingIntent.getBroadcast(this, 0, createIntent(ALARM_TIMER_ON), PendingIntent.FLAG_NO_CREATE) != null // just changed the flag
+
         timerOn = false
         saveSettings(MainActivity.APP_PREFERENCES_TIMER_ON, timerOn)
+
+        Log.i(TAG, "alarm is " + (if (isWorking) "" else "not ") + "working...")
+
+        // Obtain the FirebaseAnalytics instance.
+        val bundle = Bundle()
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+        mFirebaseAnalytics.logEvent("timerOff", bundle)
     }
 
     private fun loadSettings() {
         // UI
-        if (mSettings!!.contains(MainActivity.APP_PREFERENCES_THEME)) {
-            theme = mSettings!!.getString(MainActivity.APP_PREFERENCES_THEME, "dark")
+        if (mSettings.contains(MainActivity.APP_PREFERENCES_THEME)) {
+            theme = mSettings.getString(MainActivity.APP_PREFERENCES_THEME, "dark")
         }
         // Overlay
         // DimmerColor
-        if (mSettings!!.contains(MainActivity.APP_PREFERENCES_DIMMER_COLOR)) {
-            dimmerColorValue = mSettings!!.getInt(MainActivity.APP_PREFERENCES_DIMMER_COLOR, 0)
+        if (mSettings.contains(MainActivity.APP_PREFERENCES_DIMMER_COLOR)) {
+            dimmerColorValue = mSettings.getInt(MainActivity.APP_PREFERENCES_DIMMER_COLOR, 0)
         }
         // Dimmer
-        if (mSettings!!.contains(MainActivity.APP_PREFERENCES_DIMMER)) {
-            dimmerValue = mSettings!!.getInt(MainActivity.APP_PREFERENCES_DIMMER, 0)
+        if (mSettings.contains(MainActivity.APP_PREFERENCES_DIMMER)) {
+            dimmerValue = mSettings.getInt(MainActivity.APP_PREFERENCES_DIMMER, 0)
         }
         // Temperature
-        if (mSettings!!.contains(MainActivity.APP_PREFERENCES_TEMPERATURE)) {
-            temperature = mSettings!!.getInt(MainActivity.APP_PREFERENCES_TEMPERATURE, 4)
+        if (mSettings.contains(MainActivity.APP_PREFERENCES_TEMPERATURE)) {
+            temperature = mSettings.getInt(MainActivity.APP_PREFERENCES_TEMPERATURE, 4)
         }
 
         // Switch
-        if (mSettings!!.contains(MainActivity.APP_PREFERENCES_TIMER_ON)) {
-            timerOn = mSettings!!.getBoolean(MainActivity.APP_PREFERENCES_TIMER_ON, false)
+        if (mSettings.contains(MainActivity.APP_PREFERENCES_TIMER_ON)) {
+            timerOn = mSettings.getBoolean(MainActivity.APP_PREFERENCES_TIMER_ON, false)
         }
         // Values
-        if (mSettings!!.contains(MainActivity.APP_PREFERENCES_TIMER_HOUR_ON)) {
-            timerHourOn = mSettings!!.getString(MainActivity.APP_PREFERENCES_TIMER_HOUR_ON, "22")
+        if (mSettings.contains(MainActivity.APP_PREFERENCES_TIMER_HOUR_ON)) {
+            timerHourOn = mSettings.getString(MainActivity.APP_PREFERENCES_TIMER_HOUR_ON, "22").toString()
         }
-        if (mSettings!!.contains(MainActivity.APP_PREFERENCES_TIMER_MINUTE_ON)) {
-            timerMinuteOn = mSettings!!.getString(MainActivity.APP_PREFERENCES_TIMER_MINUTE_ON, "0")
+        if (mSettings.contains(MainActivity.APP_PREFERENCES_TIMER_MINUTE_ON)) {
+            timerMinuteOn = mSettings.getString(MainActivity.APP_PREFERENCES_TIMER_MINUTE_ON, "0").toString()
         }
-        if (mSettings!!.contains(MainActivity.APP_PREFERENCES_TIMER_HOUR_OFF)) {
-            timerHourOff = mSettings!!.getString(MainActivity.APP_PREFERENCES_TIMER_HOUR_OFF, "7")
+        if (mSettings.contains(MainActivity.APP_PREFERENCES_TIMER_HOUR_OFF)) {
+            timerHourOff = mSettings.getString(MainActivity.APP_PREFERENCES_TIMER_HOUR_OFF, "7").toString()
         }
-        if (mSettings!!.contains(MainActivity.APP_PREFERENCES_TIMER_MINUTE_OFF)) {
-            timerMinuteOff = mSettings!!.getString(MainActivity.APP_PREFERENCES_TIMER_MINUTE_OFF, "0")
+        if (mSettings.contains(MainActivity.APP_PREFERENCES_TIMER_MINUTE_OFF)) {
+            timerMinuteOff = mSettings.getString(MainActivity.APP_PREFERENCES_TIMER_MINUTE_OFF, "0").toString()
         }
     }
 
     // Save values
     private fun saveSettings(key: String, value: Boolean) {
         // Prepare for save
-        val editor = mSettings!!.edit()
+        val editor = mSettings.edit()
         // Edit Variables
         editor.putBoolean(key, value)
         // Save

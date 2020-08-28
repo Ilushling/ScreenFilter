@@ -5,19 +5,18 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
-import ru.ilushling.screenfilter.MainActivity
-import ru.ilushling.screenfilter.OverlayService
 
 class BReceiver : BroadcastReceiver() {
-    var TAG = "BroadcastReceiver"
+    private var tag = "BroadcastReceiver"
     override fun onReceive(context: Context, intent: Intent) {
         val action = if (intent.action != null) intent.action else ""
-        //Log.e(TAG, action);
+        //Log.i(TAG, action);
 
         // Open Activity
         if (action == OverlayService.OPEN_ACTION) {
             val it = Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
             context.sendBroadcast(it)
+
             // Start activity
             val i = Intent(context, MainActivity::class.java)
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
@@ -51,12 +50,15 @@ class BReceiver : BroadcastReceiver() {
             } else {
                 context.startService(i)
             }
+
             // Activity
             i = Intent()
             i.action = APP_OVERLAY_ON
             context.sendBroadcast(i)
-            Log.e(TAG, "alarmTimerOn")
+
+            Log.i(tag, "alarmTimerOn")
         }
+
         // OFF
         if (action == OverlayService.ALARM_TIMER_OFF) {
             // Service
@@ -67,11 +69,13 @@ class BReceiver : BroadcastReceiver() {
             } else {
                 context.startService(i)
             }
+
             // Activity
             i = Intent()
             i.action = APP_OVERLAY_OFF
             context.sendBroadcast(i)
-            Log.e(TAG, "alarmTimerOff")
+
+            Log.i(tag, "alarmTimerOff")
         }
 
         // Check alarm timer after reboot

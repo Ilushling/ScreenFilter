@@ -3,10 +3,9 @@ package ru.ilushling.screenfilter
 import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
-import java.util.*
 
 object ListPowerManager {
-    var POWERMANAGER_INTENTS = Arrays.asList(
+    var POWER_MANAGER_INTENTS = listOf(
             Intent().setComponent(ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")),
             Intent().setComponent(ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity")),
             Intent().setComponent(ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity")),
