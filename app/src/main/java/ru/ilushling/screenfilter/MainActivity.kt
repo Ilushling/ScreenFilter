@@ -18,10 +18,7 @@ import android.view.View
 import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.*
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
@@ -115,10 +112,6 @@ class MainActivity : Activity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_main)
-
-        MobileAds.initialize(this) {}
-
-        mAdView = findViewById(R.id.adView)
 
         // Obtain the FirebaseAnalytics instance.
         val bundle = Bundle()
@@ -373,8 +366,10 @@ class MainActivity : Activity(), View.OnClickListener {
     }
 
     private fun showAd() {
-        val adRequest = AdRequest.Builder().build()
+        MobileAds.initialize(this) {}
+
         mAdView = findViewById(R.id.adView)
+        val adRequest = AdRequest.Builder().build()
         mAdView.loadAd(adRequest)
         mAdView.visibility = View.VISIBLE
         mAdView.adListener = object : AdListener() {
@@ -383,9 +378,9 @@ class MainActivity : Activity(), View.OnClickListener {
                 Log.i(TAG, "Ad loaded")
             }
 
-            override fun onAdFailedToLoad(errorCode: Int) {
+            override fun onAdFailedToLoad(adError: LoadAdError) {
                 // Code to be executed when an ad request fails.
-                Log.e(TAG, "Ad failed to load: $errorCode")
+                Log.e(TAG, "Ad failed to load: $adError")
             }
 
             override fun onAdOpened() {
@@ -839,28 +834,22 @@ class MainActivity : Activity(), View.OnClickListener {
     }
 
     // Alternative permission
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == 1) {
             // ** if so check once again if we have permission */
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (Settings.canDrawOverlays(this)) {
-                    // continue here - permission was granted
-                    permitUI()
-                    Log.i(TAG, "Granted 1")
-                }
+            if (Settings.canDrawOverlays(this)) {
+                // continue here - permission was granted
+                permitUI()
+                Log.i(TAG, "Granted 1")
             }
         }
         if (requestCode == 2) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // continue here - permission was granted
-                Log.i(TAG, "Granted 2")
-            }
+            // continue here - permission was granted
+            Log.i(TAG, "Granted 2")
         }
         if (requestCode == 3) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // continue here - permission was granted
-                Log.i(TAG, "Granted 3")
-            }
+            // continue here - permission was granted
+            Log.i(TAG, "Granted 3")
         }
     }
 

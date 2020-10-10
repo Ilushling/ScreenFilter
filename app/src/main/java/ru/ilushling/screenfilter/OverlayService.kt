@@ -1,6 +1,9 @@
 package ru.ilushling.screenfilter
 
-import android.app.*
+import android.app.AlarmManager
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
@@ -15,6 +18,9 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.RemoteViews
+import androidx.core.app.NotificationChannelCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.analytics.FirebaseAnalytics
 import java.util.*
@@ -23,7 +29,7 @@ import kotlin.math.roundToInt
 
 class OverlayService : Service() {
     private var wm: WindowManager? = null
-    private var notification: Notification.Builder? = null
+    private var notification: NotificationCompat.Builder? = null
 
     // Variables
     private var theme: String? = ""
@@ -128,42 +134,24 @@ class OverlayService : Service() {
 
     private fun overlayOn() {
         try {
-            Log.i(TAG, "1")
             if (dimmerColorValue == 0 && dimmerValue == 0) {
                 notification = null
             } else {
                 // Prepare UI
                 // UI Params
-                Log.i(TAG, "2")
-                val params: WindowManager.LayoutParams = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    WindowManager.LayoutParams(
-                            WindowManager.LayoutParams.MATCH_PARENT,
-                            WindowManager.LayoutParams.MATCH_PARENT,
-                            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                            WindowManager.LayoutParams.FLAG_FULLSCREEN or
-                                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
-                                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
-                            PixelFormat.TRANSPARENT)
-                } else {
-                    WindowManager.LayoutParams(
-                            WindowManager.LayoutParams.MATCH_PARENT,
-                            WindowManager.LayoutParams.MATCH_PARENT,
-                            WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-                            WindowManager.LayoutParams.FLAG_FULLSCREEN or
-                                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
-                                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
-                            PixelFormat.TRANSPARENT)
-                }
+                val params: WindowManager.LayoutParams = WindowManager.LayoutParams(
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                        WindowManager.LayoutParams.FLAG_FULLSCREEN or
+                                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
+                                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                                WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
+                        PixelFormat.TRANSPARENT)
                 params.gravity = Gravity.START or Gravity.TOP
                 params.x = 0
                 params.y = 0
@@ -207,7 +195,6 @@ class OverlayService : Service() {
         val dimmerSliderDivide = 1 + 2.55f * dimmerValue / 218 * 2
         val balance = colorSliderDivide / dimmerSliderDivide
 
-        Log.i(TAG, "4" + viewDimmer)
         when (temperature) {
             1 -> viewDimmer!!.setBackgroundColor(Color.argb(max(dimmerValue, dimmerColorValue).toFloat().roundToInt(),
                     (2.55f * balance).roundToInt(),
@@ -247,7 +234,6 @@ class OverlayService : Service() {
             )
         }
 
-        Log.i(TAG, "5")
         params.height = screenHeight()
         params.width = screenWidth()
 
@@ -263,7 +249,7 @@ class OverlayService : Service() {
             saveSettings(MainActivity.APP_PREFERENCES_DIMMER_ON, false)
 
             //wm.removeView(viewDimmerColor);
-            wm!!.removeView(viewDimmer)
+            wm?.removeView(viewDimmer)
         } catch (exc: Exception) {
             Log.e(TAG, "Overlay Off: $exc")
         }
@@ -321,7 +307,7 @@ class OverlayService : Service() {
 
     private fun startNotification() {
         // Prepare
-        val mNotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        val mNotificationManager = NotificationManagerCompat.from(this)
         // Create remote view and set bigContentView.
         val customView = RemoteViews(this.packageName, R.layout.notification_dark)
 
@@ -333,27 +319,18 @@ class OverlayService : Service() {
         val notificationIntentClose = Intent(this, BReceiver::class.java).setAction(CLOSE_ACTION)
         val pendingIntentClose = PendingIntent.getBroadcast(this, 0, notificationIntentClose, PendingIntent.FLAG_UPDATE_CURRENT)
 
+        val notificationChannel = NotificationChannelCompat.Builder(NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_MIN)
+                .setName(NOTIFICATION_CHANNEL_NAME)
+                .build()
+        mNotificationManager.createNotificationChannel(notificationChannel)
         // Build notification
-        notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_MIN
-            val notificationChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, importance)
-            mNotificationManager.createNotificationChannel(notificationChannel)
-            Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
-                    .setContentTitle(getString(R.string.app_name))
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setColor(ContextCompat.getColor(this, R.color.colorAccent))
-                    .setContentIntent(pendingIntentClose)
-                    .setCustomContentView(customView)
-                    .setAutoCancel(true)
-        } else {
-            Notification.Builder(this)
-                    .setContentTitle(getString(R.string.app_name))
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentIntent(pendingIntentClose)
-                    .setContent(customView)
-                    .setPriority(Notification.PRIORITY_MAX)
-                    .setAutoCancel(true)
-        }
+        notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle(getString(R.string.app_name))
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setColor(ContextCompat.getColor(this, R.color.colorAccent))
+                .setContentIntent(pendingIntentClose)
+                .setCustomContentView(customView)
+                .setAutoCancel(true)
         // Listeners
         customView.setOnClickPendingIntent(R.id.settings, pendingIntentOpen)
         mNotificationManager.notify(ID_SERVICE, notification!!.build())
